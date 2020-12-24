@@ -28,7 +28,7 @@ entity ni_fifo is
         -- Clocking control
         clk, rst : in std_logic;
         -- FIFO Control
-        popEn, writeEn, dualWriteEn : in std_logic;
+        popEn, writeEn, dualWriteEn, writeUpper : in std_logic;
         -- FIFO Status
         fifoEmpty, fifoAlmostEmpty, fifoFull, fifoAlmostFull : out std_logic;
         -- Data
@@ -72,7 +72,12 @@ architecture ni_fifo_impl of ni_fifo is
                                 fifoWritePoint <= fifoWritePoint + 2;
                             end if;
                         else
-                            fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
+                            -- Check to see if writing upper set of dataIn or not
+                            if (writeUpper = '1') then
+                                fifo(fifoWritePoint) <= dataIn (fifoDoubleWidth - 1 downto fifoWidth);
+                            else
+                                fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
+                            end if;
                             -- Pointer wrap around check
                             if (fifoWritePoint = fifoDepth - 1) then
                                 fifoWritePoint <= 0;

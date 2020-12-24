@@ -64,7 +64,7 @@ architecture ni_tx_fsm_impl of ni_tx_fsm is
         end process;
 
         -- State behaviour process
-        state_behavior_proc: process (fifo_state, channel_state)
+        state_behavior_proc: process (fifo_state, channel_state, clk)
             begin
                 case (fifo_state) is
                     when fifoState_WRITE =>
