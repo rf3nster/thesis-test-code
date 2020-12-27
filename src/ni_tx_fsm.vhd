@@ -62,25 +62,12 @@ architecture ni_tx_fsm_impl of ni_tx_fsm is
                     end if;                        
                 end if;
         end process;
-
-        -- State behaviour process
-        state_behavior_proc: process (fifo_state, channel_state, clk)
-            begin
-                case (fifo_state) is
-                    when fifoState_WRITE =>
-                        fifoWriteEn <= '1';
-                    when others =>
-                        fifoWriteEn <= '0';
-                end case;
-
-                case (channel_state) is
-                    when channelState_TRANSMIT =>
-                        fifoPopEn <= '1';
-                        channelValid <= '1';
-                    when others =>
-                        fifoPopEn <= '0';
-                        channelValid <= '0';
-                end case;
-        end process;
-
+        
+        -- Mealy State Machine Behaviours
+        fifoPopEn <= '1' when (channel_state = channelSTATE_TRANSMIT and fifoEmpty = '0') else
+                     '0';
+        channelValid <= '1' when (channel_state = channelSTATE_TRANSMIT and fifoEmpty = '0') else
+                     '0';
+        fifoWriteEn <= '1' when (fifo_state = fifoSTATE_WRITE and fifoFull = '0') else
+                     '0';                     
 end ni_tx_fsm_impl;
