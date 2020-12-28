@@ -53,37 +53,39 @@ architecture ni_fifo_impl of ni_fifo is
     begin
         write_proc: process (clk, rst)
             begin
-                -- The great reset
                 if (rst = '1') then
                     fifoWritePoint <= 0;
-                    for i in 0 to fifoDepth-1 loop
+                    for i in 0 to fifoDepth - 1 loop
                         fifo(i) <= (others => '0');
                     end loop;
                 elsif (rising_edge(clk)) then
-                    -- Do write if not full
-                    if (writeEn = '1' and fifoFull_i = '0') then
+                    -- If can be written
+                    if (fifoFull_i = '0' and writeEn = '1') then
+                        -- Check if dual write mode
                         if (dualWriteEn = '1') then
                             fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
                             fifo(fifoWritePoint + 1) <= dataIn (fifoDoubleWidth - 1 downto fifoWidth);
-                            -- Pointer wrap around check
+
+                            -- Do pointer increase
                             if (fifoWritePoint = fifoDepth - 2) then
                                 fifoWritePoint <= 0;
                             else
                                 fifoWritePoint <= fifoWritePoint + 2;
                             end if;
+                        -- Otherwise, do single write
                         else
-                            -- Check to see if writing upper set of dataIn or not
                             if (writeUpper = '1') then
                                 fifo(fifoWritePoint) <= dataIn (fifoDoubleWidth - 1 downto fifoWidth);
                             else
                                 fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
                             end if;
-                            -- Pointer wrap around check
+
+                            -- Do pointer increase
                             if (fifoWritePoint = fifoDepth - 1) then
                                 fifoWritePoint <= 0;
                             else
                                 fifoWritePoint <= fifoWritePoint + 1;
-                            end if;
+                            end if;                                
                         end if;
                     end if;
                 end if;
@@ -94,39 +96,50 @@ architecture ni_fifo_impl of ni_fifo is
                 if (rst = '1') then
                     fifoReadPoint <= 0;
                 elsif (rising_edge(clk)) then
-                    -- Do a read if not empty
+                    -- Check if FIFO is not empty, and if so, pop
                     if (popEn = '1' and fifoEmpty_i = '0') then
-                        -- Wrap around check
+                        -- Do wrap around
                         if (fifoReadPoint = fifoDepth - 1) then
                             fifoReadPoint <= 0;
                         else
                             fifoReadPoint <= fifoReadPoint + 1;
                         end if;
-                    else
                     end if;
                 end if;
         end process;
 
-        counter_proc: process (fifoReadPoint, fifoWritePoint)
+        counter_proc: process (clk, rst)
             begin
-                fifoCounter <= abs(fifoWritePoint - fifoReadPoint);
+                if (rst = '1') then
+                    fifoCounter <= 0;
+                elsif (rising_edge (clk)) then
+                    if (writeEn = '1' and fifoFull_i = '0' and dualWriteEn = '1') then
+                        fifoCounter <= fifoCounter + 2;
+                    elsif (writeEn = '1' and fifoFull_i = '0' and dualWriteEn = '0') then
+                        fifoCounter <= fifoCounter + 1;                                                
+                    elsif (popEn = '1' and fifoEmpty_i = '0') then
+                        fifoCounter <= fifoCounter - 1;
+                    elsif (writeEn = '1' and fifoFull_i = '0' and dualWriteEn = '1' and popEn = '1' and fifoEmpty_i = '0') then
+                        fifoCounter <= fifoCounter + 1;                         
+                    end if;
+                end if;
         end process;
 
-    -- Combinational assignments
-    fifoEmpty_i <= '1' when fifoCounter = 0 else
+
+    -- Combinational signals for Empty, Almost Empty, Full and Almost Full
+    fifoEmpty_i <= '1' when (fifoCounter = 0) else
                    '0';
-
-    fifoFull_i <= '1' when ((dualWriteEn = '1' and fifoCounter >= fifoDepth-1) or (dualWriteEn = '0' and fifoCounter = fifoDepth)) else
-                '0';
-
     fifoAlmostEmpty_i <= '1' when (fifoCounter = 1) else
-                       '0';
-    fifoAlmostFull_i <= '1' when (((fifoCounter = fifoDepth-1) and dualWriteEn = '0') or ((fifoCounter = fifoDepth-2) and dualWriteEn = '1')) else
-                        '0';
-    -- Signal assignments to outside world
+                         '0';
+    fifoFull_i <= '1' when (fifoCounter >= fifoDepth - 1 and dualWriteEn = '1') or (fifoCounter = fifoDepth and dualWriteEn = '0') else
+                '0';
+    fifoAlmostFull_i <= '1' when (fifoCounter = fifoDepth - 2 and dualWriteEn = '1') or (fifoCounter = fifoDepth - 1 and dualWriteEn = '0') else
+    '0';
+
+    -- Cast signals to outside world
     fifoEmpty <= fifoEmpty_i;
-    fifoFull <= fifoFull_i;    
     fifoAlmostEmpty <= fifoAlmostEmpty_i;
+    fifoFull <= fifoFull_i;
     fifoAlmostFull <= fifoAlmostFull_i;
-    dataOut <= fifo(fifoReadPoint);    
+    dataOut <= fifo(fifoReadPoint);
 end ni_fifo_impl;

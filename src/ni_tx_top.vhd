@@ -32,11 +32,11 @@ entity ni_tx_top is
         clk, rst : in std_logic;
         dataIn : in std_logic_vector (doubleFIFOWidth - 1 downto 0);
         networkMode : in std_logic;
-        writeEn : in std_logic;
-        ctsChannelA : in std_logic;
-        channelAValid : out std_logic;
-        dataOutA : out std_logic_vector (fifoWidth - 1 downto 0);
-        accFIFOFull, accFIFOAlmostFull : out std_logic
+        writeAccEn, writeApxEn : in std_logic;
+        ctsChannelA, ctsChannelB : in std_logic;
+        channelAValid, channelBValid : out std_logic;
+        dataOutA, dataOutB : out std_logic_vector (fifoWidth - 1 downto 0);
+        accFIFOFull, accFIFOAlmostFull, apxFIFOFull, apxFIFOAlmostFull : out std_logic
     );
 end ni_tx_top;
 
@@ -81,18 +81,44 @@ architecture ni_tx_top_impl of ni_tx_top is
             channelValid : out std_logic
         );
     end component;
-    signal fifoA_Full_i, fifoA_Empty_i, fifoA_AlmostEmpty_i, fifoA_AlmostFull_i, fifoA_WriteEn_i, fifoA_PopEn_i : std_logic;
-    signal writeUpper : std_logic := '0';
+    signal fifoAcc_Full_i, fifoAcc_Empty_i, fifoAcc_AlmostEmpty_i, fifoAcc_AlmostFull_i, fifoAcc_WriteEn_i, fifoAcc_PopEn_i : std_logic;
+    signal fifoApx_WriteEn_i, fifoApx_PopEn_i : std_logic;
+    signal fifoB_Full_i, fifoB_Empty_i, fifoB_AlmostEmpty_i, fifoB_AlmostFull_i, fifoB_WriteEn_i, fifoB_PopEn_i : std_logic;    
+
     begin
-        -- Instance FIFO
+        -- Instance FIFO A
         FIFO_A : ni_fifo
             generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
-            port map (clk => clk, rst => rst, dataIn => dataIn, dataOut => dataOutA, popEn => fifoA_PopEn_i, writeEn => fifoA_WriteEn_i,
-                      fifoAlmostEmpty => fifoA_AlmostEmpty_i, fifoAlmostFull => fifoA_AlmostFull_i, fifoFull => fifoA_Full_i, fifoEmpty => fifoA_Empty_i,
-                      dualWriteEn => networkMode, writeUpper => writeUpper);
+            port map (clk => clk, rst => rst, dataIn => dataIn, dataOut => dataOutA, popEn => fifoAcc_PopEn_i, writeEn => fifoAcc_WriteEn_i,
+                      fifoAlmostEmpty => fifoAcc_AlmostEmpty_i, fifoAlmostFull => fifoAcc_AlmostFull_i, fifoFull => fifoAcc_Full_i, fifoEmpty => fifoAcc_Empty_i,
+                      dualWriteEn => networkMode, writeUpper => '0');
+        -- Instance FIFO B
+        FIFO_B : ni_fifo
+            generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
+            port map (clk => clk, rst => rst, dataIn => dataIn, dataOut => dataOutB, popEn => fifoB_PopEn_i, writeEn => fifoB_WriteEn_i,
+                      fifoAlmostEmpty => fifoB_AlmostEmpty_i, fifoAlmostFull => fifoB_AlmostFull_i, fifoFull => fifoB_Full_i, fifoEmpty => fifoB_Empty_i,
+                      dualWriteEn => '0', writeUpper => '1');        
+        -- Instance FSMs
+        FSM_ACC : ni_tx_fsm
+            port map (clk => clk, rst => rst, fifoFull => fifoAcc_Full_i, fifoEmpty => fifoAcc_Empty_i, fifoWriteEn => fifoAcc_WriteEn_i, 
+                      fifoPopEn => fifoAcc_PopEn_i, fifoWriteRqst => writeAccEn, clearToSend => ctsChannelA, channelValid => channelAValid);
+        FSM_APX : ni_tx_fsm
+            port map (clk => clk, rst => rst, fifoFull => fifoB_Full_i, fifoEmpty => fifoB_Empty_i, fifoWriteEn => fifoApx_WriteEn_i, 
+                      fifoPopEn => fifoApx_PopEn_i, fifoWriteRqst => writeApxEn, clearToSend => ctsChannelB, channelValid => channelBValid);
+                      
 
-        -- Instance FSM
-        FSM_A : ni_tx_fsm
-            port map (clk => clk, rst => rst, fifoFull => fifoA_Full_i, fifoEmpty => fifoA_Empty_i, fifoWriteEn => fifoA_WriteEn_i, 
-                      fifoPopEn => fifoA_PopEn_i, fifoWriteRqst => writeEn, clearToSend => ctsChannelA, channelValid => channelAValid);
+        -- Mux signals
+        fifoB_PopEn_i <= fifoAcc_PopEn_i when (networkMode = '0') else
+                         fifoApx_PopEn_i;
+        fifoB_WriteEn_i <= fifoAcc_WriteEn_i when (networkMode = '0') else
+                         fifoApx_WriteEn_i;
+        -- Set status signals outside
+        accFIFOFull <= fifoAcc_Full_i;
+        accFIFOAlmostFull <= fifoAcc_AlmostFull_i;
+
+        apxFIFOFull <= fifoB_Full_i;
+        apxFIFOAlmostFull <= fifoB_AlmostFull_i;
+
+
+            
 end ni_tx_top_impl;
