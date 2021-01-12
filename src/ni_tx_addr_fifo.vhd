@@ -1,12 +1,13 @@
 -------------------------------------------------
--- Approximate Network on Chip FIFO
+-- Approximate Network on Chip Address FIFO
 -- Purpose:
 --      Expandable FIFO used for network 
 --      interface. Uses generics for size. Pops
 --      and pushes on positive clock edges, async
---      reset.
+--      reset. Reduced functionality aimed for
+--      addressing.
 --  Requires: VHDL-2008
---  Rick Fenster, Dec 24/2020
+--  Rick Fenster, Jan 12/2021
 -------------------------------------------------
 
 -- Library declarations
@@ -15,11 +16,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 -- Entity
-entity ni_fifo is
+entity ni_tx_addr_fifo is
     generic
     (
         fifoWidth : integer := 16;
-        fifoDoubleWidth : integer := fifoWidth * 2;
         fifoDepth : integer := 4
     );
 
@@ -28,17 +28,17 @@ entity ni_fifo is
         -- Clocking control
         clk, rst : in std_logic;
         -- FIFO Control
-        popEn, writeEn, dualWriteEn, writeUpper : in std_logic;
+        popEn, writeEn, dualWriteEn : in std_logic;
         -- FIFO Status
-        fifoEmpty, fifoAlmostEmpty, fifoFull, fifoAlmostFull : out std_logic;
+        fifoEmpty, fifoFull : out std_logic;
         -- Data
-        dataIn : in std_logic_vector (fifoDoubleWidth - 1 downto 0);
+        dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
         dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
     );
-end ni_fifo;
+end ni_tx_addr_fifo;
 
 -- Architecture
-architecture ni_fifo_impl of ni_fifo is
+architecture ni_tx_addr_fifo_impl of ni_tx_addr_fifo is
     -- Type definition
     type fifo_t is array (fifoDepth - 1 downto 0) of std_logic_vector (fifoWidth - 1 downto 0);
     -- Create FIFO
@@ -48,7 +48,6 @@ architecture ni_fifo_impl of ni_fifo is
     signal fifoReadPoint, fifoWritePoint : integer range 0 to fifoDepth - 1 := 0;
     -- Internal FIFO Status signals
     signal fifoEmpty_i, fifoFull_i : std_logic;
-    signal fifoAlmostEmpty_i, fifoAlmostFull_i : std_logic;
     
     begin
         write_proc: process (clk, rst)
@@ -64,7 +63,7 @@ architecture ni_fifo_impl of ni_fifo is
                         -- Check if dual write mode
                         if (dualWriteEn = '1') then
                             fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
-                            fifo(fifoWritePoint + 1) <= dataIn (fifoDoubleWidth - 1 downto fifoWidth);
+                            fifo(fifoWritePoint + 1) <= dataIn (fifoWidth - 1 downto 0);
 
                             -- Do pointer increase
                             if (fifoWritePoint = fifoDepth - 2) then
@@ -74,12 +73,7 @@ architecture ni_fifo_impl of ni_fifo is
                             end if;
                         -- Otherwise, do single write
                         else
-                            if (writeUpper = '1') then
-                                fifo(fifoWritePoint) <= dataIn (fifoDoubleWidth - 1 downto fifoWidth);
-                            else
-                                fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
-                            end if;
-
+                            fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
                             -- Do pointer increase
                             if (fifoWritePoint = fifoDepth - 1) then
                                 fifoWritePoint <= 0;
@@ -129,17 +123,12 @@ architecture ni_fifo_impl of ni_fifo is
     -- Combinational signals for Empty, Almost Empty, Full and Almost Full
     fifoEmpty_i <= '1' when (fifoCounter = 0) else
                    '0';
-    fifoAlmostEmpty_i <= '1' when (fifoCounter = 1) else
-                         '0';
     fifoFull_i <= '1' when (fifoCounter >= fifoDepth - 1 and dualWriteEn = '1') or (fifoCounter = fifoDepth and dualWriteEn = '0') else
                 '0';
-    fifoAlmostFull_i <= '1' when (fifoCounter = fifoDepth - 2 and dualWriteEn = '1') or (fifoCounter = fifoDepth - 1 and dualWriteEn = '0') else
-    '0';
+
 
     -- Cast signals to outside world
     fifoEmpty <= fifoEmpty_i;
-    fifoAlmostEmpty <= fifoAlmostEmpty_i;
     fifoFull <= fifoFull_i;
-    fifoAlmostFull <= fifoAlmostFull_i;
     dataOut <= fifo(fifoReadPoint);
-end ni_fifo_impl;
+end ni_tx_addr_fifo_impl;
