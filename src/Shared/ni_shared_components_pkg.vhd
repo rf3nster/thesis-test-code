@@ -12,26 +12,26 @@ use ieee.numeric_std.all;
 package ni_shared_components is
 
 
--- Address FIFO Declaration
-component ni_addr_fifo is
-    generic
-    (
-        fifoWidth : integer := 16;
-        fifoDepth : integer := 4
-    );
+    -- Address FIFO Declaration
+    component ni_addr_fifo is
+        generic
+        (
+            fifoWidth : integer := 16;
+            fifoDepth : integer := 4
+        );
 
-    port
-    (
-        -- Clocking control
-        clk, rst : in std_logic;
-        -- FIFO Control
-        popEn, writeEn, dualWriteEn : in std_logic;
-        -- FIFO Status
-        fifoEmpty, fifoFull : out std_logic;
-        -- Data
-        dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
-        dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
-    );
-end component ni_addr_fifo;
+        port
+        (
+            -- Clocking control
+            clk, rst : in std_logic;
+            -- FIFO Control
+            popEn, writeEn, dualWriteEn : in std_logic;
+            -- FIFO Status
+            fifoEmpty, fifoFull : out std_logic;
+            -- Data
+            dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
+            dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
+        );
+    end component ni_addr_fifo;
 
 end package ni_shared_components;

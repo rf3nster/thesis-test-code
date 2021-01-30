@@ -59,13 +59,13 @@ architecture ni_rx_top_rtl of ni_rx_top is
     -- Data FIFO A signals
     signal dataFIFOA_popEn_i, dataFIFOA_writeEn_i : std_logic;
     signal dataFIFOA_full_i, dataFIFOA_empty_i : std_logic;   
-    signal dataFIFOA_dataOut_i : std_logic_vector (fifoWidth - 1 downto 0);
+    signal dataFIFOA_dataOut_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
 
 
     -- Data FIFO B signals
     signal dataFIFOB_popEn_i, dataFIFOB_writeEn_i : std_logic;
     signal dataFIFOB_full_i, dataFIFOB_empty_i : std_logic;  
-    signal dataFIFOB_dataOut_i : std_logic_vector (fifoWidth - 1 downto 0);
+    signal dataFIFOB_dataOut_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
 
     -- Signal declarations
     begin

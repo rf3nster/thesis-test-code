@@ -14,6 +14,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.ni_shared_components.all;
+
 -- Entity
 entity ni_tx_data_fifo is
     generic
