@@ -94,7 +94,7 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
                         fifoAPopEn <= '0';                        
                         fifoBPopEn <= '1';
                         fsm_state_next <= rxPopState_APX;
-                    -- If network mode ix mixed and accurate data (channel A) is present
+                    -- If network mode is mixed and accurate data (channel A) is present
                     elsif (networkMode = '1' and fifoBEmpty = '0' and fifoPopRqst = '1') then
                         fifoAPopEn <= '1';                        
                         fifoBPopEn <= '0';

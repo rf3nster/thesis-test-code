@@ -46,8 +46,11 @@ entity ni_rx_top is
 end ni_rx_top;
 
 architecture ni_rx_top_rtl of ni_rx_top is
+    -- Channel A general signals
+    signal channelA_popEn_i, channelA_writeEn_i : std_logic;
+   -- Channel B general signals
+   signal channelB_popEn_i, channelB_writeEn_i : std_logic;
     -- Address FIFO A signals
-    signal addrFIFOA_popEn_i, addrFIFOA_writeEn_i : std_logic;
     signal addrFIFOA_full_i, addrFIFOA_empty_i : std_logic;
     signal addrFIFOA_dataOut_i : std_logic_vector (addressWidth - 1 downto 0);
 
@@ -57,15 +60,15 @@ architecture ni_rx_top_rtl of ni_rx_top is
     signal addrFIFOB_dataOut_i : std_logic_vector (addressWidth - 1 downto 0);
     
     -- Data FIFO A signals
-    signal dataFIFOA_popEn_i, dataFIFOA_writeEn_i : std_logic;
     signal dataFIFOA_full_i, dataFIFOA_empty_i : std_logic;   
     signal dataFIFOA_dataOut_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
-
 
     -- Data FIFO B signals
     signal dataFIFOB_popEn_i, dataFIFOB_writeEn_i : std_logic;
     signal dataFIFOB_full_i, dataFIFOB_empty_i : std_logic;  
     signal dataFIFOB_dataOut_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
+
+    signal dataType_i : std_logic;
 
     -- Signal declarations
     begin
@@ -74,41 +77,41 @@ architecture ni_rx_top_rtl of ni_rx_top is
         addrFIFOA: ni_addr_fifo
             generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, fifoFull => addrFIFOA_full_i, fifoEmpty => addrFIFOA_empty_i,
-                popEn => addrFIFOA_popEn_i, writeEn => addrFIFOA_writeEn_i, dualWriteEn => networkMode,
+                popEn => channelA_popEn_i, writeEn => channelA_writeEn_i, dualWriteEn => networkMode,
                 dataIn => addrA, dataOut => addrFIFOA_dataOut_i);
 
         -- Address FIFO B
         addrFIFOB: ni_addr_fifo
             generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, fifoFull => addrFIFOB_full_i, fifoEmpty => addrFIFOB_empty_i,
-                popEn => addrFIFOB_popEn_i, writeEn => addrFIFOB_writeEn_i, dualWriteEn => '0',
+                popEn => channelB_popEn_i, writeEn => channelB_writeEn_i, dualWriteEn => '0',
                 dataIn => addrB, dataOut => addrFIFOB_dataOut_i);
 
         -- Data FIFO A
         dataFIFOA: ni_rx_data_fifo
             generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, fifoFull => dataFIFOA_full_i, fifoEmpty => dataFIFOA_empty_i,
-                popEn => dataFIFOA_popEn_i, writeEn => dataFIFOA_empty_i, dataOut => dataFIFOA_dataOut_i,
+                popEn => channelA_popEn_i, writeEn => channelA_writeEn_i, dataOut => dataFIFOA_dataOut_i,
                 dualOutputEn => networkMode, dataIn => dataInA);
 
         -- Data FIFO B
         dataFIFOB: ni_rx_data_fifo
             generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, fifoFull => dataFIFOB_full_i, fifoEmpty => dataFIFOB_empty_i,
-                popEn => dataFIFOB_popEn_i, writeEn => dataFIFOB_empty_i, dataOut => dataFIFOB_dataOut_i,
+                popEn => channelB_popEn_i, writeEn => channelB_writeEn_i, dataOut => dataFIFOB_dataOut_i,
                 dualOutputEn => '0', dataIn => dataInB);
 
         -- FSM Instantiations
         -- Read FSM
         readFSM: ni_rx_read_fsm
             port map (clk => clk, rst => rst, fifoAEmpty => dataFIFOA_empty_i, 
-                fifoBEmpty => dataFIFOB_empty_i, fifoAPopEn => dataFIFOA_popEn_i, fifoBPopEn => dataFIFOB_popEn_i,
-                networkMode => networkMode, dataType => dataType, dataAvailable => dataAvailable,
+                fifoBEmpty => dataFIFOB_empty_i, fifoAPopEn => channelA_popEn_i, fifoBPopEn => channelB_popEn_i,
+                networkMode => networkMode, dataType => dataType_i, dataAvailable => dataAvailable,
                 dataValid => dataValid, fifoPopRqst => dataRqst);
         
         -- Write FSM A
         writeFSMA: ni_rx_write_fsm
-            port map(clk => clk, rst => rst, fifoFull => dataFIFOA_full_i, fifoWriteEn => dataFIFOA_writeEn_i,
+            port map(clk => clk, rst => rst, fifoFull => dataFIFOA_full_i, fifoWriteEn => channelA_writeEn_i,
                 channelValid => channelAValid, clearToSend => ctsChannelA);
         
         -- Write FSM B
@@ -116,5 +119,10 @@ architecture ni_rx_top_rtl of ni_rx_top is
             port map(clk => clk, rst => rst, fifoFull => dataFIFOB_full_i, fifoWriteEn => dataFIFOB_writeEn_i,
                 channelValid => channelBValid, clearToSend => ctsChannelB);
 
-        -- Switching logic
+
+        -- External signal assignments
+        dataType <= dataType_i;        
+        -- Switching logic for origin address
+        dataOrigin <= addrFIFOB_dataOut_i when (dataType_i = '1' and networkMode = '1')
+                else addrFIFOA_dataOut_i;
 end ni_rx_top_rtl;
