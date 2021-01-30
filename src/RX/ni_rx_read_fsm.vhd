@@ -29,7 +29,7 @@ entity ni_rx_read_fsm is
         networkMode : in std_logic;
         dataType, dataAvailable : out std_logic;
         -- Channel control
-        dataAValid, dataBValid : out std_logic
+        dataValid : out std_logic
     );
 
 end ni_rx_read_fsm;
@@ -49,7 +49,7 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
                 end if;
         end process;
 
-        state_comb_proc: process (fifoAEmpty, fifoBEmpty, fsm_state)
+        state_comb_proc: process (fifoAEmpty, fifoBEmpty, fsm_state, networkMode, fifoPopRqst)
         begin
             -- By default, go back to idle states
             fsm_state_next <= rxPopState_IDLE;
@@ -119,9 +119,7 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
     dataType <= '1' when (fsm_state = rxPopState_APX) else
                 '0';
 
-    dataAValid <= '1' when (fsm_state = rxPopState_ACC) else
+    dataValid <= '1' when ((fsm_state = rxPopState_ACC) or (fsm_state = rxPopState_APX)) else
                 '0';
-    dataBValid <= '1' when ((fsm_state = rxPopState_APX) or (fsm_state = rxPopState_ACC and networkMode = '0')) else
-                 '0';
 
 end ni_rx_read_fsm_impl;

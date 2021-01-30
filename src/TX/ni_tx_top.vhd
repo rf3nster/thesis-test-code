@@ -19,6 +19,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.ni_tx_components.all;
+use work.ni_shared_components.all;
+
 entity ni_tx_top is 
     generic
     (
@@ -45,66 +49,6 @@ end ni_tx_top;
 
 architecture ni_tx_top_impl of ni_tx_top is
 
-    -- Component definition for TX Data FIFO
-    component ni_tx_data_fifo is
-        generic
-        (
-            fifoWidth : integer := 16;
-            fifoDoubleWidth : integer := fifoWidth * 2;
-            fifoDepth : integer := 4
-        );
-    
-        port
-        (
-            -- Clocking control
-            clk, rst : in std_logic;
-            -- FIFO Control
-            popEn, writeEn, dualWriteEn, writeUpper : in std_logic;
-            -- FIFO Status
-            fifoEmpty, fifoAlmostEmpty, fifoFull, fifoAlmostFull : out std_logic;
-            -- Data
-            dataIn : in std_logic_vector (fifoDoubleWidth - 1 downto 0);
-            dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
-        );
-    end component;
-    -- Component definition for TX Address FIFO
-    component ni_tx_addr_fifo is
-        generic
-        (
-            fifoWidth : integer := 16;
-            fifoDepth : integer := 4
-        );
-    
-        port
-        (
-            -- Clocking control
-            clk, rst : in std_logic;
-            -- FIFO Control
-            popEn, writeEn, dualWriteEn : in std_logic;
-            -- FIFO Status
-            fifoEmpty, fifoFull : out std_logic;
-            -- Data
-            dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
-            dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
-        );
-    end component;
-
-    -- Component definition for NI TX FSM
-    component ni_tx_fsm is
-        port
-        (
-            -- General control
-            clk, rst : in std_logic;
-            -- FIFO status signals
-            fifoFull, fifoEmpty : in std_logic;
-            -- FIFO Control signals
-            fifoWriteEn, fifoPopEn : out std_logic;
-            fifoWriteRqst : in std_logic;
-            -- Channel control
-            clearToSend : in std_logic;
-            channelValid : out std_logic
-        );
-    end component;
     signal fifoAcc_Full_i, fifoAcc_Empty_i, fifoAcc_AlmostEmpty_i, fifoAcc_AlmostFull_i, fifoAcc_WriteEn_i, fifoAcc_PopEn_i : std_logic;
     signal fifoApx_WriteEn_i, fifoApx_PopEn_i : std_logic;
     signal fifoB_Full_i, fifoB_Empty_i, fifoB_AlmostEmpty_i, fifoB_AlmostFull_i, fifoB_WriteEn_i, fifoB_PopEn_i : std_logic;  
@@ -125,12 +69,12 @@ architecture ni_tx_top_impl of ni_tx_top is
                       dualWriteEn => '0', writeUpper => '1');   
                       
         -- Instance Address FIFO A (Accurate)
-        FIFO_addr_A: ni_tx_addr_fifo
+        FIFO_addr_A: ni_addr_fifo
             generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, dataIn => addrIn, dataOut => addressOutA, popEn => fifoAcc_PopEn_i, writeEn => fifoAcc_WriteEn_i, dualWriteEn => networkMode, fifoFull => fifoAddrA_Full_i, fifoEmpty => fifoAddrA_Empty_i );
 
         -- Instance Address FIFO B (Approx)
-       FIFO_addr_B: ni_tx_addr_fifo
+       FIFO_addr_B: ni_addr_fifo
             generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, dataIn => addrIn, dataOut => addressOutB, popEn => fifoAddrB_PopEn_i, writeEn => fifoAddrB_WriteEn_i, dualWriteEn => '0', fifoFull => fifoAddrB_Full_i, fifoEmpty => fifoAddrB_Empty_i );            
         
