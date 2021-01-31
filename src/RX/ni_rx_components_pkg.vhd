@@ -70,4 +70,25 @@ component ni_rx_read_fsm is
     );
 end component ni_rx_read_fsm;
 
+-- RX Address FIFO Declaration
+component ni_rx_addr_fifo is
+    generic
+    (
+        fifoWidth : integer := 16;
+        fifoDepth : integer := 4
+    );
+
+    port
+    (
+        -- Clocking control
+        clk, rst : in std_logic;
+        -- FIFO Control
+        popEn, writeEn, dualPop : in std_logic;
+        -- FIFO Status
+        fifoEmpty, fifoFull : out std_logic;
+        -- Data
+        dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
+        dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
+    );
+end component ni_rx_addr_fifo;
 end package ni_rx_components;

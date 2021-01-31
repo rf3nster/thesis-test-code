@@ -43,15 +43,15 @@ architecture ni_rx_test_addr_impl of ni_rx_test_addr is
     signal dataAvailable_i : std_logic;
     begin
         -- Instance FIFOs
-        addrA_FIFO: ni_addr_fifo
+        addrA_FIFO: ni_rx_addr_fifo
             generic map (fifoWidth => addrWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, popEn => channelA_popEn_i, writeEn => channelA_writeEn,
-                dualWriteEn => networkMode, dataIn => addrA, fifoEmpty => fifoA_Empty_i, dataOut => addrOut_A_i);
+                dualPop => networkMode, dataIn => addrA, fifoEmpty => fifoA_Empty_i, dataOut => addrOut_A_i);
 
-        addrB_FIFO: ni_addr_fifo
+        addrB_FIFO: ni_rx_addr_fifo
             generic map (fifoWidth => addrWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, popEn => channelB_popEn_i, writeEn => channelB_writeEn,
-                dualWriteEn => '0', dataIn => addrB, fifoEmpty => fifoB_Empty_i, dataOut => addrOut_B_i);
+                dualPop => '0', dataIn => addrB, fifoEmpty => fifoB_Empty_i, dataOut => addrOut_B_i);
         -- Instance Read FSM
 
         rx_read_fsm: ni_rx_read_fsm

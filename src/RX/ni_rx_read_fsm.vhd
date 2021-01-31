@@ -90,15 +90,15 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
                         fifoBPopEn <= '1';                        
                         fsm_state_next <= rxPopState_ACC;
                     -- If network mode is mixed and accurate data (channel A) is present (priority)
-                    elsif (networkMode = '1' and fifoAEmpty = '0' and fifoBEmpty = '1' and fifoPopRqst = '1') then
-                        fifoAPopEn <= '0';                        
-                        fifoBPopEn <= '1';
-                        fsm_state_next <= rxPopState_APX;
-                    -- If network mode is mixed and accurate data (channel A) is present
-                    elsif (networkMode = '1' and fifoBEmpty = '0' and fifoPopRqst = '1') then
+                    elsif (networkMode = '1' and fifoAEmpty = '0' and fifoPopRqst = '1') then
                         fifoAPopEn <= '1';                        
                         fifoBPopEn <= '0';
-                        fsm_state_next <= rxPopState_ACC;                        
+                        fsm_state_next <= rxPopState_ACC;
+                    -- If network mode is mixed and accurate data (channel A) is present
+                    elsif (networkMode = '1' and fifoAEmpty = '1' and fifoBEmpty = '0' and fifoPopRqst = '1') then
+                        fifoAPopEn <= '0';                        
+                        fifoBPopEn <= '1';
+                        fsm_state_next <= rxPopState_APX;                        
                     -- Fall back to idle
                     else
                         fifoAPopEn <= '0';                        
@@ -109,7 +109,7 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
 
                 when others =>
                         fifoAPopEn <= '0';
-                        fifoBPopEn <= '0';                                              
+                        fifoBPopEn <= '0'; 
                         fsm_state_next <= rxPopState_IDLE; 
             end case;
     end process;
