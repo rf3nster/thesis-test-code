@@ -59,7 +59,7 @@ architecture ni_rx_addr_fifo_impl of ni_rx_addr_fifo is
                     end loop;
                 elsif (rising_edge(clk)) then
                     -- If can be written
-                    if ((writeEn = '1' and fifoFull_i = '0') or (writeEn = '1' and fifoFull_i = '1' and popEn = '1')) then
+                    if (writeEn = '1' and fifoFull_i = '0') then
                             fifo(fifoWritePoint) <= dataIn (fifoWidth - 1 downto 0);
                             -- Do pointer increase
                             if (fifoWritePoint = fifoDepth - 1) then

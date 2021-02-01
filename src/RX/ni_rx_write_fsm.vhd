@@ -47,9 +47,6 @@ architecture ni_rx_write_fsm_impl of ni_rx_write_fsm is
 
         state_comb_proc: process (fifoFull, channelValid, fsm_state)
         begin
-            -- By default, go back to idle states
-            fsm_state_next <= rxWriteState_IDLE;
-            fifoWriteEn <= '0';
 
             -- Case for FIFO Write State
             case fsm_state is

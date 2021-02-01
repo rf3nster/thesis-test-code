@@ -64,7 +64,7 @@ architecture ni_rx_data_fifo_impl of ni_rx_data_fifo is
 
                 elsif (rising_edge(clk)) then
                     -- Do write
-                    if (fifoFull_i = '0' and writeEn = '1') then
+                    if (fifoFull_i = '0' and writeEn = '1' and fifoFull_i = '0') then
                         fifo(fifoWritePoint) <= dataIn;
                         -- Increment pointer
                         if (fifoWritePoint = fifoDepth - 1) then
@@ -125,7 +125,7 @@ architecture ni_rx_data_fifo_impl of ni_rx_data_fifo is
     -- Combinational signals for Empty, Almost Empty, Full and Almost Full
     fifoEmpty_i <= '1' when (fifoCounter = 0) or (fifoCounter = 1 and dualOutputEn = '1') or  (fifoCounter = 0 and dualOutputEn = '1')
                 else '0';
-    fifoFull_i <= '1' when ((fifoCounter = fifoDepth) and (dualOutputEn = '0')) or ((fifoCounter = fifoDepth - 1 or fifoCounter = fifoDepth) and (dualOutputEn = '1'))
+    fifoFull_i <= '1' when ((fifoCounter = fifoDepth)) 
                 else '0';
     fifoAlmostEmpty_i <= '1' when (fifoCounter = 1 and dualOutputEn = '0') or (fifoCounter = 2 and dualOutputEn = '1')
                 else '0';
