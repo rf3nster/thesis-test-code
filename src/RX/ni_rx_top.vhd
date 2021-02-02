@@ -5,8 +5,7 @@
 --      Instances FIFOs and necessary components
 --  Requires: VHDL-2008
 --  Rick Fenster, Jan 30/2021
--- TO-DO:
---      * Add combination/muxes for signals
+--  Updated, Feb 1/2021
 -------------------------------------------------
 
 -- Library declarations
@@ -46,83 +45,83 @@ entity ni_rx_top is
 end ni_rx_top;
 
 architecture ni_rx_top_rtl of ni_rx_top is
-    -- Channel A general signals
-    signal channelA_popEn_i, channelA_writeEn_i : std_logic;
-   -- Channel B general signals
-   signal channelB_popEn_i, channelB_writeEn_i : std_logic;
-    -- Address FIFO A signals
-    signal addrFIFOA_full_i, addrFIFOA_empty_i : std_logic;
-    signal addrFIFOA_dataOut_i : std_logic_vector (addressWidth - 1 downto 0);
+    -- Channel A Signals
+    signal dataFIFO_A_out_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
+    signal addrFIFO_A_out_i : std_logic_vector (addressWidth - 1 downto 0);
+    signal dataFIFO_A_empty_i, dataFIFO_A_full_i, FIFO_A_popEn_i, FIFO_A_writeEn_i : std_logic;
 
-    -- Address FIFO B signals
-    signal addrFIFOB_popEn_i, addrFIFOB_writeEn_i : std_logic;
-    signal addrFIFOB_full_i, addrFIFOB_empty_i : std_logic;
-    signal addrFIFOB_dataOut_i : std_logic_vector (addressWidth - 1 downto 0);
-    
-    -- Data FIFO A signals
-    signal dataFIFOA_full_i, dataFIFOA_empty_i : std_logic;   
-    signal dataFIFOA_dataOut_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
+    -- Channel B Signals
+    signal dataFIFO_B_out_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
+    signal addrFIFO_B_out_i : std_logic_vector (addressWidth - 1 downto 0);    
+    signal dataFIFO_B_empty_i, dataFIFO_B_full_i, FIFO_B_popEn_i, FIFO_B_writeEn_i : std_logic;
+    signal FIFO_B_writeEn_postmux_i : std_logic;
 
-    -- Data FIFO B signals
-    signal dataFIFOB_popEn_i, dataFIFOB_writeEn_i : std_logic;
-    signal dataFIFOB_full_i, dataFIFOB_empty_i : std_logic;  
-    signal dataFIFOB_dataOut_i : std_logic_vector (doubleFIFOWidth - 1 downto 0);
-
+    -- Internal status signals
     signal dataType_i : std_logic;
 
-    -- Signal declarations
     begin
-        -- FIFO Instantiations 
-        -- Address FIFO A
-        addrFIFOA: ni_addr_fifo
-            generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
-            port map (clk => clk, rst => rst, fifoFull => addrFIFOA_full_i, fifoEmpty => addrFIFOA_empty_i,
-                popEn => channelA_popEn_i, writeEn => channelA_writeEn_i, dualWriteEn => networkMode,
-                dataIn => addrA, dataOut => addrFIFOA_dataOut_i);
+    
+    -- Instance Data FIFO A
+    data_FIFO_A : ni_rx_data_fifo
+        generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
+        port map (clk => clk, rst => rst, popEn => FIFO_A_popEn_i, writeEn => FIFO_A_writeEn_i,
+            fifoEmpty => dataFIFO_A_empty_i, fifoFull => dataFIFO_A_full_i, dualOutputEn => networkMode,
+            dataIn => dataInA, dataOut => dataFIFO_A_out_i);
 
-        -- Address FIFO B
-        addrFIFOB: ni_addr_fifo
-            generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
-            port map (clk => clk, rst => rst, fifoFull => addrFIFOB_full_i, fifoEmpty => addrFIFOB_empty_i,
-                popEn => channelB_popEn_i, writeEn => channelB_writeEn_i, dualWriteEn => '0',
-                dataIn => addrB, dataOut => addrFIFOB_dataOut_i);
+    -- Instance Data FIFO B
+    data_FIFO_B : ni_rx_data_fifo
+        generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
+        port map (clk => clk, rst => rst, popEn => FIFO_B_popEn_i, writeEn => FIFO_B_writeEn_postmux_i,
+            fifoEmpty => dataFIFO_B_empty_i, fifoFull => dataFIFO_B_full_i, dualOutputEn => '0',
+                dataIn => dataInB, dataOut => dataFIFO_B_out_i);
 
-        -- Data FIFO A
-        dataFIFOA: ni_rx_data_fifo
-            generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
-            port map (clk => clk, rst => rst, fifoFull => dataFIFOA_full_i, fifoEmpty => dataFIFOA_empty_i,
-                popEn => channelA_popEn_i, writeEn => channelA_writeEn_i, dataOut => dataFIFOA_dataOut_i,
-                dualOutputEn => networkMode, dataIn => dataInA);
+    -- Instance Address FIFO A
+    addr_FIFO_A : ni_rx_addr_fifo
+        generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
+        port map (clk => clk, rst => rst, popEn => FIFO_A_popEn_i, writeEn => FIFO_A_writeEn_i,
+            dualPop => networkMode, dataIn => addrA, dataOut => addrFIFO_A_out_i);
 
-        -- Data FIFO B
-        dataFIFOB: ni_rx_data_fifo
-            generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
-            port map (clk => clk, rst => rst, fifoFull => dataFIFOB_full_i, fifoEmpty => dataFIFOB_empty_i,
-                popEn => channelB_popEn_i, writeEn => channelB_writeEn_i, dataOut => dataFIFOB_dataOut_i,
-                dualOutputEn => '0', dataIn => dataInB);
+    -- Instance Address FIFO B            
+    addr_FIFO_B : ni_rx_addr_fifo
+        generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
+        port map (clk => clk, rst => rst, popEn => FIFO_B_popEn_i, writeEn => FIFO_B_writeEn_postmux_i,
+            dualPop => '0', dataIn => addrB, dataOut => addrFIFO_B_out_i);
 
-        -- FSM Instantiations
-        -- Read FSM
-        readFSM: ni_rx_read_fsm
-            port map (clk => clk, rst => rst, fifoAEmpty => dataFIFOA_empty_i, 
-                fifoBEmpty => dataFIFOB_empty_i, fifoAPopEn => channelA_popEn_i, fifoBPopEn => channelB_popEn_i,
-                networkMode => networkMode, dataType => dataType_i, dataAvailable => dataAvailable,
-                dataValid => dataValid, fifoPopRqst => dataRqst);
-        
-        -- Write FSM A
-        writeFSMA: ni_rx_write_fsm
-            port map(clk => clk, rst => rst, fifoFull => dataFIFOA_full_i, fifoWriteEn => channelA_writeEn_i,
-                channelValid => channelAValid, clearToSend => ctsChannelA);
-        
-        -- Write FSM B
-        writeFSMB: ni_rx_write_fsm
-            port map(clk => clk, rst => rst, fifoFull => dataFIFOB_full_i, fifoWriteEn => dataFIFOB_writeEn_i,
-                channelValid => channelBValid, clearToSend => ctsChannelB);
+    -- Instance Data Read FSM
+    rx_read_fsm: ni_rx_read_fsm
+        port map (clk => clk, rst => rst, fifoAEmpty => dataFIFO_A_empty_i, fifoBEmpty => dataFIFO_B_empty_i,
+            fifoAPopEn => FIFO_A_popEn_i, fifoBPopEn => FIFO_B_popEn_i, fifoPopRqst => dataRqst,
+            networkMode => networkMode, dataType => dataType_i, dataAvailable => dataAvailable,
+            dataValid => dataValid);
 
+    -- Instance channel A Write FSM
+    rx_write_chanA_fsm : ni_rx_write_fsm
+        port map (clk => clk, rst => rst, fifoFull => dataFIFO_A_full_i, fifoWriteEn => FIFO_A_writeEn_i,
+            channelValid => channelAValid, clearToSend => ctsChannelA);
 
-        -- External signal assignments
-        dataType <= dataType_i;        
-        -- Switching logic for origin address
-        dataOrigin <= addrFIFOB_dataOut_i when (dataType_i = '1' and networkMode = '1')
-                else addrFIFOA_dataOut_i;
+    -- Instance channel B Write FSM
+    rx_write_chanB_fsm : ni_rx_write_fsm
+        port map (clk => clk, rst => rst, fifoFull => dataFIFO_B_full_i, fifoWriteEn => FIFO_B_writeEn_i,
+            channelValid => channelBValid, clearToSend => ctsChannelB);            
+
+            -- Switching for Channel B FIFO Write Enables
+    FIFO_B_writeEN_postmux_i <= FIFO_A_writeEn_i when (networkMode = '0') else
+        FIFO_B_writeEn_i;
+
+    -- Switching for data origin
+    dataOrigin <= addrFIFO_A_out_i when (networkMode = '0' or (networkMode = '1' and dataType_i = '0'))
+        else addrFIFO_B_out_i;
+    -- Switching for data output
+    dataOut (doubleFIFOWidth - 1 downto fifoWidth) <= 
+               dataFIFO_B_out_i (doublefifoWidth - 1 downto fifoWidth) when (networkMode = '1' and dataType = '1')
+        else   dataFIFO_A_out_i (doubleFIFOWidth - 1 downto fifoWidth) when (networkMode = '1' and dataType = '0')
+        else   dataFIFO_A_out_i (fifoWidth - 1 downto 0) when (networkMode = '0');
+
+    dataOut (fifoWidth - 1 downto 0) <=
+        dataFIFO_B_out_i (fifoWidth - 1 downto 0) when (networkMode = '1' and dataType = '1')
+        else   dataFIFO_A_out_i (fifoWidth - 1 downto 0) when (networkMode = '1' and dataType = '0')
+        else   dataFIFO_B_out_i (fifoWidth - 1 downto 0) when (networkMode = '0');
+
+        dataType <= dataType_i;
+
 end ni_rx_top_rtl;
