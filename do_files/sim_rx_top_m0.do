@@ -1,4 +1,5 @@
 # Create testing environment for RX Top
+# Mode 0
 # Rick Fenster, Jan 30/2021
 
 # Compile all files
@@ -105,11 +106,18 @@ force channelAValid 0
 force channelBValid 0
 force dataRqst 1
 run 500
+
+# Write on empty, requesting data
 force channelAValid 1
 force channelBValid 1
 force dataInA 16#FFFF
 force dataInB 16#FFFF
 force addrA 16#FF
 force addrB 16#FF
+run 100
+force dataInA 16#0101
+force dataInB 16#0101
+force addrA 16#01
+force addrB 16#01
 run 100
 

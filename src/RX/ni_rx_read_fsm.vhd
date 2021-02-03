@@ -119,7 +119,7 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
     dataType <= '1' when (fsm_state = rxPopState_APX) else
                 '0';
 
-    dataValid <= '1' when ((fsm_state = rxPopState_ACC) or (fsm_state = rxPopState_APX)) else
+    dataValid <= '1' when ((fsm_state = rxPopState_ACC) and (fifoAEmpty = '0')) or ((fsm_state = rxPopState_APX) and fifoBEmpty = '0') else
                 '0';
 
 end ni_rx_read_fsm_impl;
