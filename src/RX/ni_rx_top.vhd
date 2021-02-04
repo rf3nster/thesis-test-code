@@ -112,16 +112,19 @@ architecture ni_rx_top_rtl of ni_rx_top is
     dataOrigin <= addrFIFO_A_out_i when (networkMode = '0' or (networkMode = '1' and dataType_i = '0'))
         else addrFIFO_B_out_i;
     -- Switching for data output
-    dataOut (doubleFIFOWidth - 1 downto fifoWidth) <= 
-               dataFIFO_B_out_i (doublefifoWidth - 1 downto fifoWidth) when (networkMode = '1' and dataType = '1')
-        else   dataFIFO_A_out_i (doubleFIFOWidth - 1 downto fifoWidth) when (networkMode = '1' and dataType = '0')
-        else   dataFIFO_A_out_i (fifoWidth - 1 downto 0) when (networkMode = '0');
-
-    dataOut (fifoWidth - 1 downto 0) <=
-        dataFIFO_B_out_i (fifoWidth - 1 downto 0) when (networkMode = '1' and dataType = '1')
-        else   dataFIFO_A_out_i (fifoWidth - 1 downto 0) when (networkMode = '1' and dataType = '0')
-        else   dataFIFO_B_out_i (fifoWidth - 1 downto 0) when (networkMode = '0');
-
+    data_out_mux : process (networkMode, dataType_i, dataFIFO_A_out_i, dataFIFO_B_out_i, clk)
+        begin
+            if (networkMode = '1' and dataType_i = '0') then
+                dataOut (doubleFIFOWidth - 1 downto fifoWidth) <= dataFIFO_A_out_i (doubleFIFOWidth - 1 downto fifoWidth);
+                dataOut (fifoWidth - 1 downto 0) <= dataFIFO_A_out_i (FIFOWidth - 1 downto 0);
+            elsif (networkMode = '1' and dataType_i = '1') then
+                dataOut (doubleFIFOWidth - 1 downto fifoWidth) <= dataFIFO_B_out_i (doubleFIFOWidth - 1 downto fifoWidth);
+                dataOut (fifoWidth - 1 downto 0) <= dataFIFO_B_out_i (FIFOWidth - 1 downto 0);
+            else
+                dataOut (doubleFIFOWidth - 1 downto fifoWidth) <= dataFIFO_A_out_i (FIFOWidth - 1 downto 0);
+                dataOut (fifoWidth - 1 downto 0) <= dataFIFO_B_out_i (FIFOWidth - 1 downto 0);                
+            end if;
+    end process;
         dataType <= dataType_i;
 
 end ni_rx_top_rtl;

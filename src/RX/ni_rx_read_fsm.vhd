@@ -6,7 +6,7 @@
 --      Control FIFOs and popping from them
 --  Requires: VHDL-2008
 --  Rick Fenster, Jan 26/2021
---  Updated on Jan 29/2021
+--  Updated on Feb 03/2021
 -------------------------------------------------
 
 -- Library declarations
@@ -49,7 +49,7 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
                 end if;
         end process;
 
-        state_comb_proc: process (fifoAEmpty, fifoBEmpty, fsm_state, networkMode, fifoPopRqst)
+        state_comb_proc: process (fifoAEmpty, fifoBEmpty, fsm_state, networkMode, fifoPopRqst, clk)
         begin
             -- By default, go back to idle states
             fsm_state_next <= rxPopState_IDLE;
@@ -59,16 +59,42 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
             -- Case for FIFO Write State
             case fsm_state is
                 -- Idle state
-                when rxPopState_IDLE | rxPopState_ACC =>
+                when rxPopState_IDLE  =>
                     -- When in accurate only mode and data is present
                     if (fifoAEmpty = '0' and fifoBEmpty = '0' and networkMode = '0' and fifoPopRqst = '1') then
                         fifoAPopEn <= '1';
-                        fifoBPopEn <= '1';                        
+                        fifoBPopEn <= '1'; 
+                                                                      
                         fsm_state_next <= rxPopState_ACC;
                     -- If network mode is mixed and approx data (channel B) is present (priority)
                     elsif (networkMode = '1' and fifoBEmpty = '0' and fifoPopRqst = '1') then
                         fifoAPopEn <= '0';                        
                         fifoBPopEn <= '1';
+                                              
+                        fsm_state_next <= rxPopState_APX;
+                    -- If network mode is mixed and accurate data (channel A) is present
+                    elsif (networkMode = '1' and fifoAEmpty = '0' and fifoBEmpty = '1' and fifoPopRqst = '1') then
+                        fifoAPopEn <= '1';                        
+                        fifoBPopEn <= '0';
+                        fsm_state_next <= rxPopState_ACC;                        
+                    -- Fall back to idle
+                    else
+                                         
+                        fifoAPopEn <= '0';                        
+                        fifoBPopEn <= '0';
+                        fsm_state_next <= rxPopState_IDLE;    
+                    end if;
+                    
+                    when rxPopState_ACC  =>
+                    -- When in accurate only mode and data is present
+                    if (fifoAEmpty = '0' and fifoBEmpty = '0' and networkMode = '0' and fifoPopRqst = '1') then
+                        fifoAPopEn <= '1';
+                        fifoBPopEn <= '1';                            
+                        fsm_state_next <= rxPopState_ACC;
+                    -- If network mode is mixed and approx data (channel B) is present (priority)
+                    elsif (networkMode = '1' and fifoBEmpty = '0' and fifoPopRqst = '1') then
+                        fifoAPopEn <= '0';                        
+                        fifoBPopEn <= '1';       
                         fsm_state_next <= rxPopState_APX;
                     -- If network mode ix mixed and accurate data (channel A) is present
                     elsif (networkMode = '1' and fifoAEmpty = '0' and fifoBEmpty = '1' and fifoPopRqst = '1') then
@@ -77,30 +103,35 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
                         fsm_state_next <= rxPopState_ACC;                        
                     -- Fall back to idle
                     else
+                                            
                         fifoAPopEn <= '0';                        
                         fifoBPopEn <= '0';
                         fsm_state_next <= rxPopState_IDLE;    
-                    end if;
+                    end if;                    
                 
                 -- Approx state
                 when rxPopState_APX =>
                     -- When in accurate only mode and data is present
                     if (fifoAEmpty = '0' and fifoBEmpty = '0' and networkMode = '0' and fifoPopRqst = '1') then
+                       
                         fifoAPopEn <= '1';
-                        fifoBPopEn <= '1';                        
+                        fifoBPopEn <= '1';                                              
                         fsm_state_next <= rxPopState_ACC;
                     -- If network mode is mixed and accurate data (channel A) is present (priority)
                     elsif (networkMode = '1' and fifoAEmpty = '0' and fifoPopRqst = '1') then
+                        
                         fifoAPopEn <= '1';                        
-                        fifoBPopEn <= '0';
+                        fifoBPopEn <= '0';                       
                         fsm_state_next <= rxPopState_ACC;
                     -- If network mode is mixed and accurate data (channel A) is present
                     elsif (networkMode = '1' and fifoAEmpty = '1' and fifoBEmpty = '0' and fifoPopRqst = '1') then
+                                            
                         fifoAPopEn <= '0';                        
-                        fifoBPopEn <= '1';
+                        fifoBPopEn <= '1';                       
                         fsm_state_next <= rxPopState_APX;                        
                     -- Fall back to idle
                     else
+                      
                         fifoAPopEn <= '0';                        
                         fifoBPopEn <= '0';
                         fsm_state_next <= rxPopState_IDLE;    
@@ -109,17 +140,25 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
 
                 when others =>
                         fifoAPopEn <= '0';
-                        fifoBPopEn <= '0'; 
+                        fifoBPopEn <= '0';
+                      
                         fsm_state_next <= rxPopState_IDLE; 
             end case;
     end process;
 
     -- Add concurrent signal assignments
     dataAvailable <= NOT(fifoAEmpty) or NOT(fifoBEmpty);
-    dataType <= '1' when (fsm_state = rxPopState_APX) else
+    dataType <= '1' when (fsm_state_next = rxPopState_APX) else
                 '0';
 
-    dataValid <= '1' when ((fsm_state = rxPopState_ACC) and (fifoAEmpty = '0')) or ((fsm_state = rxPopState_APX) and fifoBEmpty = '0') else
-                '0';
-
+    dataValid_proc : process (fifoPopRqst, fsm_state_next)
+        begin
+            if (fifoPopRqst = '1' and fsm_state_next = rxPopState_APX) then
+                dataValid <= '1';
+            elsif (fifoPopRqst = '1' and fsm_state_next = rxPopState_ACC) then
+                dataValid <= '1';
+            else
+                dataValid <= '0';
+            end if;
+    end process;
 end ni_rx_read_fsm_impl;
