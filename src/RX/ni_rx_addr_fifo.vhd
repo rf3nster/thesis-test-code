@@ -102,35 +102,67 @@ architecture ni_rx_addr_fifo_impl of ni_rx_addr_fifo is
                 if (rst = '1') then
                     fifoCounter <= 0;
                 elsif (rising_edge (clk)) then
-                    -- Basic write, no pop
-                    if (writeEn = '1' and fifoFull_i = '0' and popEn = '0') then
+                    -- Write only cases
+                    -- Write, no dualPop, no pop and FIFO is not full
+                    if (writeEn = '1' and fifoFull_i = '0' and popEn = '0' and dualPop = '0') then
                         fifoCounter <= fifoCounter + 1;
-                    -- Basic pop, no write, single pop
-                    elsif (writeEn = '0' and fifoEmpty_i = '0' and popEn = '1' and dualPop = '0') then
-                        fifoCounter <= fifoCounter - 1;
-                    -- Basic pop, no write, dual pop
-                    elsif (writeEn = '0' and fifoEmpty_i = '0' and popEn = '1' and dualPop = '1') then
-                            fifoCounter <= fifoCounter - 2;
-                    -- Pop and write, single pop
-                    elsif (writeEn = '1' and fifoEmpty_i = '0' and fifoFull_i = '0' and popEn = '1' and dualPop = '0') then
-                        fifoCounter <= fifoCounter; 
-                    -- Pop and write, dual pop
-                    elsif (writeEn = '1' and fifoEmpty_i = '0' and fifoFull_i = '0' and popEn = '1' and dualPop = '1') then
-                        fifoCounter <= fifoCounter - 1;                                               
-                    -- Weird edge cases
-                    -- Pop and write, single pop but full
-                    elsif (writeEn = '1' and fifoEmpty_i = '0' and fifoFull_i = '1' and popEn = '1' and dualPop = '0') then
-                        fifoCounter <= fifoCounter; 
-                    -- Pop and write, single pop but empty
-                    elsif (writeEn = '1' and fifoEmpty_i = '1' and fifoFull_i = '0' and popEn = '1' and dualPop = '0') then
-                        fifoCounter <= fifoCounter + 1;
-                    -- Pop and write, dual pop but empty
-                    elsif (writeEn = '1' and fifoEmpty_i = '1' and fifoFull_i = '0' and popEn = '1' and dualPop = '1') then
-                        fifoCounter <= fifoCounter + 1;
-                    -- Pop and write, dual pop but full
-                    elsif (writeEn = '1' and fifoEmpty_i = '0' and fifoFull_i = '1' and popEn = '1' and dualPop = '1') then
-                        fifoCounter <= fifoCounter - 2;                                                                             
                     end if;
+                    -- Write, dualPop, no pop and FIFO is not full
+                    if (writeEn = '1' and fifoFull_i = '0' and popEn = '0' and dualPop = '1') then
+                        fifoCounter <= fifoCounter + 1;
+                    end if;
+                    -- Write, no dual pop, FIFO is full
+                    if (writeEn = '1' and fifoFull_i = '1' and popEn = '0' and dualPop = '0') then
+                        fifoCounter <= fifoCounter;
+                    end if;    
+                    -- Write, dual pop, FIFO is full
+                    if (writeEn = '1' and fifoFull_i = '1' and popEn = '0' and dualPop = '1') then
+                        fifoCounter <= fifoCounter;
+                    end if; 
+                    
+                    -- Pop only cases
+                    -- Pop only, single pop, FIFO is not empty
+                    if (writeEn = '0' and fifoEmpty_i = '0' and popEn = '1' and dualPop = '0') then
+                        fifoCounter <= fifoCounter - 1;
+                    end if;                    
+                    -- Pop only, dual pop, FIFO is not empty
+                    if (writeEn = '0' and fifoEmpty_i = '0' and popEn = '1' and dualPop = '1') then
+                        fifoCounter <= fifoCounter - 2;
+                    end if;        
+                    -- Pop only, single pop, FIFO is empty
+                    if (writeEn = '0' and fifoEmpty_i = '1' and popEn = '1' and dualPop = '0') then
+                        fifoCounter <= fifoCounter;
+                    end if;  
+                    -- Pop and write, dual pop
+                    if (writeEn = '0' and fifoEmpty_i = '1' and popEn = '1' and dualPop = '1') then
+                        fifoCounter <= fifoCounter;
+                    end if;
+                    
+                    -- Pop and write cases
+                    -- Write, pop, fifo is not empty, fifo is not full, single pop
+                    if (writeEn = '1' and fifoEmpty_i = '0' and fifoFull_i = '0' and popEn = '1' and dualPop = '0') then
+                        fifoCounter <= fifoCounter;
+                    end if;
+                    -- Write, pop, fifo is not empty, fifo is not full, dual pop
+                    if (writeEn = '1' and fifoEmpty_i = '1' and fifoFull_i = '0' and popEn = '1' and dualPop = '1') then
+                        fifoCounter <= fifoCounter - 1;
+                    end if;
+                    -- Write, pop, fifo is full, single pop
+                    if (writeEn = '1' and fifoEmpty_i = '0' and fifoFull_i = '1' and popEn = '1' and dualPop = '0') then
+                        fifoCounter <= fifoCounter - 1;
+                    end if;
+                    -- Write, pop, fifo is full, dual pop
+                    if (writeEn = '1' and fifoEmpty_i = '0' and fifoFull_i = '1' and popEn = '1' and dualPop = '1') then
+                        fifoCounter <= fifoCounter - 2;
+                    end if;
+                    -- Write, pop, fifo is empty, single pop
+                    if (writeEn = '1' and fifoEmpty_i = '1' and fifoFull_i = '0' and popEn = '1' and dualPop = '0') then
+                        fifoCounter <= fifoCounter + 1;
+                    end if;
+                    -- Write, pop, fifo is empty, dual pop
+                    if (writeEn = '1' and fifoEmpty_i = '1' and fifoFull_i = '0' and popEn = '1' and dualPop = '1') then
+                        fifoCounter <= fifoCounter + 1;
+                    end if;                                                                                                              
                 end if;
         end process;
 

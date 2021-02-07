@@ -91,4 +91,33 @@ component ni_rx_addr_fifo is
         dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
     );
 end component ni_rx_addr_fifo;
+
+component ni_rx_top is
+    generic
+    (
+        addressWidth : integer := 6;
+        fifoWidth : integer := 16;
+        doubleFIFOWidth : integer := fifoWidth * 2;        
+        fifoDepth : integer := 4
+    );
+
+    port
+    (
+        -- Basic control signals
+        clk, rst, networkMode : in std_logic;
+        -- Data inputs
+        addrA, addrB : in std_logic_vector (addressWidth - 1 downto 0);
+        dataInA, dataInB : in std_logic_vector (fifoWidth - 1 downto 0);
+        -- Data control signals
+        ctsChannelA, ctsChannelB : out std_logic;
+        channelAValid, channelBValid : in std_logic;
+        dataRqst : in std_logic;
+        -- Data output signals
+        dataOut : out std_logic_vector (doubleFifoWidth - 1 downto 0);
+        dataValid : out std_logic;
+        dataAvailable : out std_logic;
+        dataType : out std_logic;
+        dataOrigin : out std_logic_vector (addressWidth - 1 downto 0)
+    );
+end component;
 end package ni_rx_components;

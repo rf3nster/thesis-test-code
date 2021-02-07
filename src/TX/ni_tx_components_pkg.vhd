@@ -52,4 +52,29 @@ package ni_tx_components is
     
     end component ni_tx_fsm;
 
+    component ni_tx_top is
+        generic
+        (
+            addressWidth : integer := 6;
+            fifoWidth : integer := 16;
+            doubleFIFOWidth : integer := fifoWidth * 2;        
+            fifoDepth : integer := 4
+        );
+    
+        port
+        (
+            clk, rst : in std_logic;
+            dataIn : in std_logic_vector (doubleFIFOWidth - 1 downto 0);
+            networkMode : in std_logic;
+            writeAccEn, writeApxEn : in std_logic;
+            ctsChannelA, ctsChannelB : in std_logic;
+            channelAValid, channelBValid : out std_logic;
+            dataOutA, dataOutB : out std_logic_vector (fifoWidth - 1 downto 0);
+            addressOutA, addressOutB : out std_logic_vector (addressWidth - 1 downto 0);
+            addrIn : in std_logic_vector (addressWidth - 1 downto 0);
+            accFIFOFull, accFIFOAlmostFull, apxFIFOFull, apxFIFOAlmostFull : out std_logic
+        );
+    end component;
+    
+
 end package ni_tx_components;

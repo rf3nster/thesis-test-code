@@ -49,7 +49,7 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
                 end if;
         end process;
 
-        state_comb_proc: process (fifoAEmpty, fifoBEmpty, fsm_state, networkMode, fifoPopRqst, clk)
+        state_comb_proc: process (fifoAEmpty, fifoBEmpty, fsm_state, networkMode, fifoPopRqst)
         begin
             -- By default, go back to idle states
             fsm_state_next <= rxPopState_IDLE;
@@ -153,12 +153,12 @@ architecture ni_rx_read_fsm_impl of ni_rx_read_fsm is
 
     dataValid_proc : process (fifoPopRqst, fsm_state_next)
         begin
+            dataValid <= '0';
             if (fifoPopRqst = '1' and fsm_state_next = rxPopState_APX) then
                 dataValid <= '1';
-            elsif (fifoPopRqst = '1' and fsm_state_next = rxPopState_ACC) then
+            end if;
+            if (fifoPopRqst = '1' and fsm_state_next = rxPopState_ACC) then
                 dataValid <= '1';
-            else
-                dataValid <= '0';
             end if;
     end process;
 end ni_rx_read_fsm_impl;

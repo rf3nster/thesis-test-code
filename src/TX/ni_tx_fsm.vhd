@@ -38,76 +38,65 @@ architecture ni_tx_fsm_impl of ni_tx_fsm is
     -- Define channel transmission state
     type channel_state_t is (channelState_IDLE, channelState_TRANSMIT);
     -- Instance states
-    signal fifo_state, fifo_state_next : fifo_state_t := fifoState_IDLE;
-    signal channel_state, channel_state_next : channel_state_t := channelState_IDLE;
+    signal fifo_state: fifo_state_t := fifoState_IDLE;
+    signal channel_state: channel_state_t := channelState_IDLE;
     signal fifoWriteEn_i, fifoPopEn_i, channelValid_i : std_logic := '0';
+
     begin
-        -- State transition process
-        state_transition_proc: process (clk, rst)
-            begin  
+        process (clk, rst)
+            begin
                 if (rst = '1') then
                     fifo_state <= fifoState_IDLE;
                     channel_state <= channelState_IDLE;
+                -- Do state changes
                 elsif (rising_edge(clk)) then
-                    fifo_state <= fifo_state_next;
-                    channel_state <= channel_state_next;
+                    -- Fifo write switch case
+                    case fifo_state is
+                        when others =>
+                            if (fifoFull = '0' and fifoWriteRqst = '1') then
+                                fifo_state <= fifoState_WRITE;
+                            else
+                                fifo_state <= fifoState_IDLE;
+                            end if;
+                    end case;   
+                    -- Transmission Channel switch case
+                    case channel_state is
+                        when others =>
+                            if (clearToSend = '1' and fifoEmpty = '0') then
+                                channel_state <= channelState_TRANSMIT;
+                            else
+                                channel_state <= channelState_IDLE;
+                            end if;
+                    end case; 
                 end if;
         end process;
-
-        state_comb_proc: process (fifoFull, fifoEmpty, fifoWriteRqst, clearToSend, fifo_state, channel_state)
+  
+        transmission_proc : process (channel_state, fifoEmpty, clearToSend)
             begin
-                -- By default, go back to idle states
-                fifo_state_next <= fifoState_IDLE;
-                channel_state_next <= channelState_IDLE;
-                fifoPopEn_i <= '0';
-                fifoWriteEn_i <= '0';
-                channelValid_i <= '0';
-                -- Case for FIFO Write State
-                case fifo_state is
-                    when fifoState_WRITE =>
-                        if (fifoFull = '0' and fifoWriteRqst = '1') then
-                            fifoWriteEn_i <= '1';
-                            fifo_state_next <= fifoState_WRITE;
+                case channel_state is
+                    when others =>
+                        if (fifoEmpty = '0' and clearToSend = '1') then
+                            fifoPopEn_i <= '1';
+                            channelValid_i <= '1';
                         else
-                            fifoWriteEn_i <= '0';
-                            fifo_state_next <= fifoState_IDLE;
+                            fifoPopEn_i <= '0';
+                            channelValid_i <= '0';
                         end if;
+                end case; 
+        end process;
+
+        fifo_proc : process (fifo_state, fifoFull, fifoWriteRqst)
+            begin
+                case fifo_state is
                     when others =>
                         if (fifoFull = '0' and fifoWriteRqst = '1') then
                             fifoWriteEn_i <= '1';
-                            fifo_state_next <= fifoState_WRITE;
                         else
                             fifoWriteEn_i <= '0';
-                            fifo_state_next <= fifoState_IDLE;
                         end if;
-                end case;
-
-                -- Case for popping/transmitting
-                case channel_state is
-                    when channelState_TRANSMIT =>
-                        if (fifoEmpty = '0' and clearToSend = '1') then
-                            fifoPopEn_i <= '1';
-                            channelValid_i <= '1';
-                            channel_state_next <= channelState_TRANSMIT;
-                        else
-                            fifoPopEn_i <= '0';
-                            channelValid_i <= '0';
-                            channel_state_next <= channelState_IDLE;
-                        end if;
-                        when channelState_IDLE =>
-                        if (fifoEmpty = '0' and clearToSend = '1') then
-                            fifoPopEn_i <= '1';
-                            channelValid_i <= '1';
-                            channel_state_next <= channelState_TRANSMIT;
-                        else
-                            fifoPopEn_i <= '0';
-                            channelValid_i <= '0';
-                            channel_state_next <= channelState_IDLE;
-                        end if;
-                end case;
-        end process;
-
-
+                end case; 
+        end process;        
+    -- Cast signals to outside world
     fifoPopEn <= fifoPopEn_i;
     fifoWriteEn <= fifoWriteEn_i;
     channelValid <= channelValid_i;
