@@ -130,4 +130,6 @@ architecture ni_addr_fifo_impl of ni_addr_fifo is
                    '0';
     fifoFull_i <= '1' when (fifoCounter = fifoDepth) else
                   '0';
+    fifoFull <= fifoFull_i;
+    fifoEmpty <= fifoEmpty_i;
 end ni_addr_fifo_impl;

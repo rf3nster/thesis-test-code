@@ -141,7 +141,7 @@ architecture ni_tx_data_fifo_impl of ni_tx_data_fifo is
                     end if;
                     -- Write when dual write enabled but pop is enabled, FIFO is not empty
                     if (fifoFull = '0' and fifoEmpty = '1' and popEn = '1' and writeEn = '1' and dualWriteEn = '1') then
-                        fifoCounter <= fifoCounter +1;
+                        fifoCounter <= fifoCounter + 1;
                     end if;    
                     
                     -- Pop only states
@@ -152,7 +152,29 @@ architecture ni_tx_data_fifo_impl of ni_tx_data_fifo is
                     -- Pop when FIFO is empty and no write enabled
                     if (fifoEmpty = '1' and popEn = '1' and writeEn = '0') then
                         fifoCounter <= fifoCounter;
-                    end if;                    
+                    end if;
+                    
+                    -- Write and pop states
+                    -- Write and pop when not full or empty, no dualwrite
+                    if (fifoEmpty = '0' and fifoFull = '0' and popEn = '1' and writeEn = '1' and dualWriteEn = '0') then
+                        fifoCounter <= fifoCounter;
+                    end if;
+                    -- Write and pop when not full or empty, dual write
+                    if (fifoEmpty = '0' and fifoFull = '0' and popEn = '1' and writeEn = '1' and dualWriteEn = '1') then
+                        fifoCounter <= fifoCounter + 1;
+                    end if;
+                    -- Write and pop when FIFO is full
+                    if (fifoFull = '1' and fifoEmpty = '0' and popEn = '1' and writeEn = '1') then
+                        fifoCounter <= fifoCounter - 1;
+                    end if;
+                    -- Write and pop when FIFO is empty, no dualwrite
+                    if (fifoFull = '0' and fifoEmpty = '1' and popEn = '1' and writeEn = '1' and dualWriteEn = '0') then
+                        fifoCounter <= fifoCounter + 1;
+                    end if;
+                    -- Write and pop when FIFO is empty, dual write
+                    if (fifoFull = '0' and fifoEmpty = '1' and popEn = '1' and writeEn = '1' and dualWriteEn = '1') then
+                        fifoCounter <= fifoCounter + 2;
+                    end if;
                 end if;
         end process;
         

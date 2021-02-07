@@ -1,5 +1,5 @@
 # Create testing environment for RX-TX Point to Point testing
-# Mode 0
+# Mode 1
 # Rick Fenster, last updated on Feb 5/2021
 
 # Compile all files
@@ -24,7 +24,7 @@ add wave -position end  -label Reset sim:/ni_rx_tx_test/rst
 # Set reset to 0
 force -freeze sim:/ni_rx_tx_test/rst 0 0
 add wave -position end  -label "Network Mode" sim:/ni_rx_tx_test/networkMode
-force networkMode 0
+force networkMode 1
 # Transceiver
 add wave -divider "Transceiver Properties"
 add wave -position end  -radix hex -label "Data In" sim:/ni_rx_tx_test/dataIn
@@ -46,8 +46,8 @@ add wave -position end  sim:/ni_rx_tx_test/ni_tx/FSM_ACC/channel_state
 add wave -divider "Link Properties"
 add wave -position end  -radix hex -label "Channel A Address" sim:/ni_rx_tx_test/addrA
 add wave -position end  -radix hex -label "Channel B Address" sim:/ni_rx_tx_test/addrB
-add wave -position end  -radix hex -label "Channel A Data" sim:/ni_rx_tx_test/dataChannelB
-add wave -position end  -radix hex -label "Channel B Data" sim:/ni_rx_tx_test/dataChannelA
+add wave -position end  -radix hex -label "Channel A Data" sim:/ni_rx_tx_test/dataChannelA
+add wave -position end  -radix hex -label "Channel B Data" sim:/ni_rx_tx_test/dataChannelB
 add wave -position end  sim:/ni_rx_tx_test/channelAValid
 add wave -position end  sim:/ni_rx_tx_test/channelBValid
 add wave -position end  sim:/ni_rx_tx_test/ctsChannelA
@@ -73,34 +73,17 @@ add wave -position end  sim:/ni_rx_tx_test/ni_tx/FIFO_addr_A/fifoCounter
 add wave -position end  sim:/ni_rx_tx_test/ni_tx/FIFO_addr_B/fifoCounter
 
 
-# Fill FIFO entirely
-force dataIn 16#CAFED00D
+
+
+# Fill RX channel ACC
+force datarqst 0
 force writeAccEn 1
 force writeApxEn 0
-force addrIn 16#01
-run 100
-force dataIn 16#B105F00D
 force addrIn 16#02
+force dataIn 16#DEADBEEF
 run 100
-force dataIn 16#DABBAD00
 force addrIn 16#03
-run 100
-force dataIn 16#0D15EA5E
-force addrIn 16#04
-run 100
-# Push everything Out
-force writeAccEn 0
-force dataRqst 1
-run 400
-
-# Write once
-force writeAccEn 1
-force dataIn 16#FFFFFFFF
-force addrIn 16#05
-run 100
-# Pop and write another
-force dataIn 16#111111111
-force addrIn 16#07
+force dataIn 16#DECAFBAD
 run 100
 force writeAccEn 0
-run 200
+run 100

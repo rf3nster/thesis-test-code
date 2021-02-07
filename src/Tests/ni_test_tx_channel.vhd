@@ -29,6 +29,7 @@ entity ni_test_tx_channel is
         dataOut : out std_logic_vector (fifoWidth  - 1 downto 0);
         fifoWriteRqst : in std_logic;
         clearToSend : in std_logic;
+        networkMode : in std_logic;
         channelValid : out std_logic
     );
 end ni_test_tx_channel;
@@ -38,7 +39,7 @@ architecture ni_test_tx_channel_impl of ni_test_tx_channel is
         begin
             ni_fifo : ni_tx_data_fifo
                 generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
-                port map (clk=>clk, rst => rst, popEn => fifoPopEn_i, writeEn => fifoWriteEn_i, dualWriteEn => '0',
+                port map (clk=>clk, rst => rst, popEn => fifoPopEn_i, writeEn => fifoWriteEn_i, dualWriteEn => networkMode,
                     writeUpper => '0', fifoEmpty => fifoEmpty_i, fifoFull => fifoFull_i, dataIn => dataIn, dataOut => dataOut);
 
             ni_fsm : ni_tx_fsm

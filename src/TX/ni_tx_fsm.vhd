@@ -39,7 +39,7 @@ architecture ni_tx_fsm_impl of ni_tx_fsm is
     type channel_state_t is (channelState_IDLE, channelState_TRANSMIT);
     -- Instance states
     signal fifo_state: fifo_state_t := fifoState_IDLE;
-    signal channel_state: channel_state_t := channelState_IDLE;
+    signal channel_state, channel_state_next: channel_state_t := channelState_IDLE;
     signal fifoWriteEn_i, fifoPopEn_i, channelValid_i : std_logic := '0';
 
     begin
@@ -60,28 +60,29 @@ architecture ni_tx_fsm_impl of ni_tx_fsm is
                             end if;
                     end case;   
                     -- Transmission Channel switch case
-                    case channel_state is
-                        when others =>
-                            if (clearToSend = '1' and fifoEmpty = '0') then
-                                channel_state <= channelState_TRANSMIT;
-                            else
-                                channel_state <= channelState_IDLE;
-                            end if;
-                    end case; 
+                    channel_state <= channel_state_next;
                 end if;
         end process;
   
         transmission_proc : process (channel_state, fifoEmpty, clearToSend)
             begin
                 case channel_state is
-                    when others =>
-                        if (fifoEmpty = '0' and clearToSend = '1') then
+                    when channelState_TRANSMIT =>
                             fifoPopEn_i <= '1';
                             channelValid_i <= '1';
+                            if (fifoEmpty = '0' and clearToSend = '1') then
+                                channel_state_next <= channelState_TRANSMIT;
+                            else
+                                channel_state_next <= channelState_IDLE;
+                            end if;
+                    when channelState_IDLE =>
+                        fifoPopEn_i <= '0';
+                        channelValid_i <= '0';
+                        if (fifoEmpty = '0' and clearToSend = '1') then
+                            channel_state_next <= channelState_TRANSMIT;
                         else
-                            fifoPopEn_i <= '0';
-                            channelValid_i <= '0';
-                        end if;
+                            channel_state_next <= channelState_IDLE;
+                        end if;                    
                 end case; 
         end process;
 
