@@ -27,7 +27,7 @@ component ni_rx_data_fifo is
         -- FIFO Control
         popEn, writeEn, dualOutputEn : in std_logic;
         -- FIFO Status
-        fifoEmpty, fifoFull, fifoAlmostFull, fifoAlmostEmpty : out std_logic;
+        fifoEmpty, fifoFull : out std_logic;
         -- Data
         dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
         dataOut : out std_logic_vector (fifoWidth * 2 - 1 downto 0)

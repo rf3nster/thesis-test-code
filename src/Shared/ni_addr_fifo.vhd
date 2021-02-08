@@ -101,28 +101,48 @@ architecture ni_addr_fifo_impl of ni_addr_fifo is
         begin
             if (rst = '1') then
                 fifoCounter <= 0;
-            -- Write only scenarios
             elsif (rising_edge(clk)) then
-                if (popEn = '0' and writeEn = '1' and dualWriteEn = '0' and fifoFull_i = '0') then
-                    fifoCounter <= fifoCounter + 1;
-                elsif (popEn = '0' and writeEn = '1' and dualWriteEn = '1' and fifoFull_i = '0') then    
-                    fifoCounter <= fifoCounter + 2;
-                -- Pop only scenarios
-                elsif (popEn = '1' and writeEn = '0' and fifoEmpty_i = '1') then
-                    fifoCounter <= fifoCounter - 1;  
-                -- Write and Pop scenarios
-                elsif (popEn = '1' and writeEn = '1' and fifoFull_i = '1') then
-                    fifoCounter <= fifoCounter - 1;
-                elsif (popEn = '1' and writeEn = '1' and fifoFull_i = '0' and fifoEmpty_i = '0' and dualWriteEn = '0') then
-                        fifoCounter <= fifoCounter;
-                elsif (popEn = '1' and writeEn = '1' and fifoFull_i = '0' and fifoEmpty_i = '0' and dualWriteEn = '1') then
-                        fifoCounter <= fifoCounter + 1; 
-                elsif (popEn = '1' and writeEn = '1' and fifoFull_i = '0' and fifoEmpty_i = '1' and dualWriteEn = '0') then
+                -- Write only
+                if (writeEn = '1' and popEn = '0') then
+                    -- Write when dualWrite is enabled
+                    if (dualWriteEn = '1' and fifoFull_i = '0') then
+                        fifoCounter <= fifoCounter + 2;
+                    -- Write when dualWrite is disabled
+                    elsif (dualWriteEn = '0' and fifoFull_i = '0') then
                         fifoCounter <= fifoCounter + 1;
-                elsif (popEn = '1' and writeEn = '1' and fifoFull_i = '0' and fifoEmpty_i = '1' and dualWriteEn = '1') then
-                        fifoCounter <= fifoCounter + 2;                                                 
+                    end if;
+                -- Pop only
+                elsif (writeEn = '0' and popEn = '1') then
+                    if (fifoEmpty_i = '0') then 
+                        fifoCounter <= fifoCounter - 1;
+                    end if;
+                -- Write and Pop at same time
+                elsif (writeEn = '1' and popEn = '1') then
+                    if (dualWriteEn = '1') then
+                        -- Pop and Write, dual write when not full or empty
+                        if (fifoFull_i = '0' and fifoEmpty_i = '0') then
+                            fifoCounter <= fifoCounter + 1;
+                        -- Pop and Write, dual write when full 
+                        elsif (fifoFull_i = '1' and fifoEmpty_i = '0') then
+                            fifoCounter <= fifoCounter - 1;
+                        -- Pop and Write, dual write when empty 
+                        elsif (fifoFull_i = '0' and fifoEmpty_i = '1') then
+                            fifoCounter <= fifoCounter + 2;
+                        end if;
+                    else  
+                        -- Pop and Write, no dual write when not full or empty
+                        if (fifoFull_i = '0' and fifoEmpty_i = '0') then
+                            fifoCounter <= fifoCounter;
+                        -- Pop and Write, no dual write when full
+                        elsif (fifoFull_i = '1' and fifoEmpty_i = '0') then
+                            fifoCounter <= fifoCounter - 1;
+                        -- Pop and write, no dual write when empty
+                        elsif (fifoFull_i = '0' and fifoEmpty_i = '1') then
+                            fifoCounter <= fifoCounter + 1;
+                        end if;
+                    end if;
                 end if;
-        end if;
+            end if;
     end process;
 
     dataOut <= fifo(fifoReadPoint);

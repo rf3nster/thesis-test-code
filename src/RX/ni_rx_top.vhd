@@ -112,7 +112,7 @@ architecture ni_rx_top_rtl of ni_rx_top is
     dataOrigin <= addrFIFO_A_out_i when (networkMode = '0' or (networkMode = '1' and dataType_i = '0'))
         else addrFIFO_B_out_i;
     -- Switching for data output
-    data_out_mux : process (networkMode, dataType_i, dataFIFO_A_out_i, dataFIFO_B_out_i, clk)
+    data_out_mux : process (networkMode, dataType_i, dataFIFO_A_out_i, dataFIFO_B_out_i)
         begin
             if (networkMode = '1' and dataType_i = '0') then
                 dataOut (doubleFIFOWidth - 1 downto fifoWidth) <= dataFIFO_A_out_i (doubleFIFOWidth - 1 downto fifoWidth);

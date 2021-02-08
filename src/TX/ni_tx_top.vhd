@@ -53,7 +53,9 @@ architecture ni_tx_top_impl of ni_tx_top is
     signal fifoApx_WriteEn_i, fifoApx_PopEn_i : std_logic;
     signal fifoB_Full_i, fifoB_Empty_i, fifoB_AlmostEmpty_i, fifoB_AlmostFull_i, fifoB_WriteEn_i, fifoB_PopEn_i : std_logic;  
     signal fifoAddrA_Full_i, fifoAddrA_Empty_i, fifoAddrB_Full_i, fifoAddrB_Empty_i, fifoAddrB_PopEn_i, fifoAddrB_WriteEn_i : std_logic;  
-
+    -- Assign architectures
+    for FSM_ACC : ni_tx_fsm use entity work.ni_tx_fsm(ni_tx_mealy_fsm_impl);      
+    for FSM_APX : ni_tx_fsm use entity work.ni_tx_fsm(ni_tx_mealy_fsm_impl);    
     begin
         -- Instance Data FIFO A
         FIFO_data_A : ni_tx_data_fifo
@@ -66,7 +68,7 @@ architecture ni_tx_top_impl of ni_tx_top is
             generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, dataIn => dataIn, dataOut => dataOutB, popEn => fifoB_PopEn_i, writeEn => fifoB_WriteEn_i,
                       fifoAlmostEmpty => fifoB_AlmostEmpty_i, fifoAlmostFull => fifoB_AlmostFull_i, fifoFull => fifoB_Full_i, fifoEmpty => fifoB_Empty_i,
-                      dualWriteEn => '0', writeUpper => '1');   
+                      dualWriteEn => '0', writeUpper => '0');   
                       
         -- Instance Address FIFO A (Accurate)
         FIFO_addr_A: ni_addr_fifo
@@ -85,7 +87,7 @@ architecture ni_tx_top_impl of ni_tx_top is
         FSM_APX : ni_tx_fsm
             port map (clk => clk, rst => rst, fifoFull => fifoB_Full_i, fifoEmpty => fifoB_Empty_i, fifoWriteEn => fifoApx_WriteEn_i, 
                       fifoPopEn => fifoApx_PopEn_i, fifoWriteRqst => writeApxEn, clearToSend => ctsChannelB, channelValid => channelBValid);
-                      
+              
         -- Mux signals for data FIFO
         fifoB_PopEn_i <= fifoAcc_PopEn_i when (networkMode = '0') else
                          fifoApx_PopEn_i;

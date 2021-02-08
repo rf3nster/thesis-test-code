@@ -35,12 +35,15 @@ add wave -position end  -label "Accurate Buffer Full" sim:/ni_rx_tx_test/accFIFO
 add wave -position end  -label "Accurate Buffer Empty" sim:/ni_rx_tx_test/ni_tx/FIFO_data_A/fifoEmpty
 add wave -position end  -label "FIFO A Data" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_data_A/fifo
 add wave -position end  -label "FIFO A Address" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_addr_A/fifo
-add wave -position end  -label "FIFO A Counter" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_data_A/fifocounter
+add wave -position end  -label "FIFO A Data Counter" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_data_A/fifocounter
+add wave -position end  -label "Channel A Address FIFO Counter" sim:/ni_rx_tx_test/ni_tx/FIFO_addr_A/fifoCounter
 add wave -position end  -label "FIFO B Data" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_data_B/fifo
 add wave -position end  -label "FIFO B Address" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_addr_B/fifo
-add wave -position end  -label "FIFO B Counter" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_data_B/fifocounter
+add wave -position end  -label "FIFO B Data Counter" -radix hex sim:/ni_rx_tx_test/ni_tx/FIFO_data_B/fifocounter
+add wave -position end  -label "Channel B Address FIFO Counter" sim:/ni_rx_tx_test/ni_tx/FIFO_addr_B/fifoCounter
 add wave -position end  -label "Acc Write FSM" sim:/ni_rx_tx_test/ni_tx/FSM_ACC/fifo_state
-add wave -position end  sim:/ni_rx_tx_test/ni_tx/FSM_ACC/channel_state
+
+
 
 # Link
 add wave -divider "Link Properties"
@@ -68,13 +71,16 @@ add wave -position end  -label "FIFO A Counter" -radix hex sim:/ni_rx_tx_test/ni
 add wave -position end  -label "FIFO B Data" -radix hex sim:/ni_rx_tx_test/ni_rx/data_FIFO_B/fifo
 add wave -position end  -label "FIFO B Address" -radix hex sim:/ni_rx_tx_test/ni_rx/addr_FIFO_B/fifo
 add wave -position end  -label "FIFO B Counter" -radix hex sim:/ni_rx_tx_test/ni_rx/data_FIFO_B/fifocounter
-add wave -position end  sim:/ni_rx_tx_test/ni_rx/rx_write_chanA_fsm/fsm_state
-add wave -position end  sim:/ni_rx_tx_test/ni_tx/FIFO_addr_A/fifoCounter
-add wave -position end  sim:/ni_rx_tx_test/ni_tx/FIFO_addr_B/fifoCounter
+add wave -position end  -label "Receiver Write State" sim:/ni_rx_tx_test/ni_rx/rx_write_chanA_fsm/fsm_state
+add wave -position end  -label "Receiver Pop State" sim:/ni_rx_tx_test/ni_rx/rx_read_fsm/fsm_state
+add wave -position end  sim:/ni_rx_tx_test/ni_rx/dataFIFO_B_out_i
+add wave -position end  sim:/ni_rx_tx_test/ni_rx/FIFO_B_writeEn_i
+add wave -position end  sim:/ni_rx_tx_test/ni_rx/FIFO_B_writeEn_postmux_i
+add wave -position end  sim:/ni_rx_tx_test/ni_rx/dataInB
+add wave -position end  sim:/ni_rx_tx_test/ni_tx/dataOutB
 
 
-
-
+# ACC Solo Testing
 # Fill RX channel ACC
 force datarqst 0
 force writeAccEn 1
@@ -86,4 +92,23 @@ force addrIn 16#03
 force dataIn 16#DECAFBAD
 run 100
 force writeAccEn 0
+run 200
+# Pop out data
+force dataRqst 1
+run 400
+force dataRqst 0
+run 100
+
+# Write out one packet
+force writeAccEn 1
+force addrIn 16#04
+force dataIn 16#FFFFFFFF
+run 100
+force writeAccEn 0
+run 400
+
+# Apx Solo testing
+force writeApxEn 1
+force dataIn 16#4444
+force addrIn 16#10
 run 100
