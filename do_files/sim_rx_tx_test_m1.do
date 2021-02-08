@@ -3,10 +3,10 @@
 # Rick Fenster, last updated on Feb 5/2021
 
 # Compile all files
-vcom ../thesis-code/thesis-test-code/src/RX/*.vhd
-vcom ../thesis-code/thesis-test-code/src/RX/*.vhd
-vcom ../thesis-code/thesis-test-code/src/Shared/*.vhd
-vcom ../thesis-code/thesis-test-code/src/Tests/ni_tx_rx_single_point_test.vhd
+#vcom ../thesis-code/thesis-test-code/src/RX/*.vhd
+#vcom ../thesis-code/thesis-test-code/src/RX/*.vhd
+#vcom ../thesis-code/thesis-test-code/src/Shared/*.vhd
+#vcom ../thesis-code/thesis-test-code/src/Tests/ni_tx_rx_single_point_test.vhd
 # Start simulation
 vsim work.ni_rx_tx_test 
 # Create work area
@@ -107,8 +107,12 @@ run 100
 force writeAccEn 0
 run 400
 
-# Apx Solo testing
+# Mixed tests
 force writeApxEn 1
 force dataIn 16#4444
 force addrIn 16#10
-run 100
+run 300
+force writeAccEn 0
+force writeApxEn 0
+force dataRqst 1
+run 400
