@@ -15,14 +15,15 @@ use ieee.numeric_std.all;
 
 library work;
 use work.ni_rx_components.all;
-use work.ni_shared_components.all;
+use work.ni_fifo_components.all;
+use work.shared_noc_parameters.all;
 
 entity ni_rx_top is
     generic(
-        addressWidth : integer := 6;
-        fifoWidth : integer := 16;
-        doubleFIFOWidth : integer := fifoWidth * 2;        
-        fifoDepth : integer := 4
+        addressWidth : integer := ADDR_WIDTH;
+        fifoWidth : integer := APX_DATA_SIZE;
+        doubleFIFOWidth : integer := ACC_DATA_SIZE;        
+        fifoDepth : integer := FIFO_DEPTH
     );
 
     port(
@@ -62,27 +63,27 @@ architecture ni_rx_top_rtl of ni_rx_top is
     begin
     
     -- Instance Data FIFO A
-    data_FIFO_A : ni_rx_data_fifo
+    data_FIFO_A : fifo_dual_output
         generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
         port map (clk => clk, rst => rst, popEn => FIFO_A_popEn_i, writeEn => FIFO_A_writeEn_i,
             fifoEmpty => dataFIFO_A_empty_i, fifoFull => dataFIFO_A_full_i, dualOutputEn => networkMode,
             dataIn => dataInA, dataOut => dataFIFO_A_out_i);
 
     -- Instance Data FIFO B
-    data_FIFO_B : ni_rx_data_fifo
+    data_FIFO_B : fifo_dual_output
         generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
         port map (clk => clk, rst => rst, popEn => FIFO_B_popEn_i, writeEn => FIFO_B_writeEn_postmux_i,
             fifoEmpty => dataFIFO_B_empty_i, fifoFull => dataFIFO_B_full_i, dualOutputEn => '0',
                 dataIn => dataInB, dataOut => dataFIFO_B_out_i);
 
     -- Instance Address FIFO A
-    addr_FIFO_A : ni_rx_addr_fifo
+    addr_FIFO_A : fifo_dual_pop
         generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
         port map (clk => clk, rst => rst, popEn => FIFO_A_popEn_i, writeEn => FIFO_A_writeEn_i,
             dualPop => networkMode, dataIn => addrA, dataOut => addrFIFO_A_out_i);
 
     -- Instance Address FIFO B            
-    addr_FIFO_B : ni_rx_addr_fifo
+    addr_FIFO_B : fifo_dual_pop
         generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
         port map (clk => clk, rst => rst, popEn => FIFO_B_popEn_i, writeEn => FIFO_B_writeEn_postmux_i,
             dualPop => '0', dataIn => addrB, dataOut => addrFIFO_B_out_i);

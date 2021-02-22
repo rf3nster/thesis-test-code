@@ -20,16 +20,17 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.ni_shared_components.all;
+use work.ni_fifo_components.all;
 use work.ni_tx_components.all;
+use work.shared_noc_parameters.all;
 
 entity ni_tx_top is 
     generic
     (
-        addressWidth : integer := 6;
-        fifoWidth : integer := 16;
-        doubleFIFOWidth : integer := fifoWidth * 2;        
-        fifoDepth : integer := 4
+        addressWidth : integer := ADDR_WIDTH;
+        fifoWidth : integer := APX_DATA_SIZE;
+        doubleFIFOWidth : integer := ACC_DATA_SIZE;        
+        fifoDepth : integer := FIFO_DEPTH
     );
 
     port
@@ -58,27 +59,29 @@ architecture ni_tx_top_impl of ni_tx_top is
     for FSM_APX : ni_tx_fsm use entity work.ni_tx_fsm(ni_tx_mealy_fsm_impl);    
     begin
         -- Instance Data FIFO A
-        FIFO_data_A : ni_tx_data_fifo
+        FIFO_data_A : fifo_dual_write
             generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, dataIn => dataIn, dataOut => dataOutA, popEn => fifoAcc_PopEn_i, writeEn => fifoAcc_WriteEn_i,
                       fifoAlmostEmpty => fifoAcc_AlmostEmpty_i, fifoAlmostFull => fifoAcc_AlmostFull_i, fifoFull => fifoAcc_Full_i, fifoEmpty => fifoAcc_Empty_i,
                       dualWriteEn => networkMode, writeUpper => '0');
         -- Instance Data FIFO B
-        FIFO_data_B : ni_tx_data_fifo
+        FIFO_data_B : fifo_dual_write
             generic map (fifoWidth => fifoWidth, fifoDepth => fifoDepth)
             port map (clk => clk, rst => rst, dataIn => dataIn, dataOut => dataOutB, popEn => fifoB_PopEn_i, writeEn => fifoB_WriteEn_i,
                       fifoAlmostEmpty => fifoB_AlmostEmpty_i, fifoAlmostFull => fifoB_AlmostFull_i, fifoFull => fifoB_Full_i, fifoEmpty => fifoB_Empty_i,
                       dualWriteEn => '0', writeUpper => '0');   
                       
         -- Instance Address FIFO A (Accurate)
-        FIFO_addr_A: ni_addr_fifo
+        FIFO_addr_A: fifo_dual_write_addr
             generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
-            port map (clk => clk, rst => rst, dataIn => addrIn, dataOut => addressOutA, popEn => fifoAcc_PopEn_i, writeEn => fifoAcc_WriteEn_i, dualWriteEn => networkMode, fifoFull => fifoAddrA_Full_i, fifoEmpty => fifoAddrA_Empty_i );
+            port map (clk => clk, rst => rst, dataIn => addrIn, dataOut => addressOutA, popEn => fifoAcc_PopEn_i, writeEn => fifoAcc_WriteEn_i, 
+                dualWriteEn => networkMode, fifoFull => fifoAddrA_Full_i, fifoEmpty => fifoAddrA_Empty_i );
 
         -- Instance Address FIFO B (Approx)
-       FIFO_addr_B: ni_addr_fifo
+       FIFO_addr_B: fifo_dual_write_addr
             generic map (fifoWidth => addressWidth, fifoDepth => fifoDepth)
-            port map (clk => clk, rst => rst, dataIn => addrIn, dataOut => addressOutB, popEn => fifoAddrB_PopEn_i, writeEn => fifoAddrB_WriteEn_i, dualWriteEn => '0', fifoFull => fifoAddrB_Full_i, fifoEmpty => fifoAddrB_Empty_i );            
+            port map (clk => clk, rst => rst, dataIn => addrIn, dataOut => addressOutB, popEn => fifoAddrB_PopEn_i, writeEn => fifoAddrB_WriteEn_i, 
+                dualWriteEn => '0', fifoFull => fifoAddrB_Full_i, fifoEmpty => fifoAddrB_Empty_i );            
         
         -- Instance FSMs
         FSM_ACC : ni_tx_fsm

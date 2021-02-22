@@ -16,7 +16,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 -- Entity
-entity ni_addr_fifo is
+entity fifo_dual_write_addr is
     generic
     (
         fifoWidth : integer := 16;
@@ -35,10 +35,10 @@ entity ni_addr_fifo is
         dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
         dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
     );
-end ni_addr_fifo;
+end fifo_dual_write_addr;
 
 -- Architecture
-architecture ni_addr_fifo_impl of ni_addr_fifo is
+architecture fifo_dual_write_addr_impl of fifo_dual_write_addr is
     -- Type definition
     type fifo_t is array (fifoDepth - 1 downto 0) of std_logic_vector (fifoWidth - 1 downto 0);
     -- Create FIFO
@@ -152,4 +152,4 @@ architecture ni_addr_fifo_impl of ni_addr_fifo is
                   '0';
     fifoFull <= fifoFull_i;
     fifoEmpty <= fifoEmpty_i;
-end ni_addr_fifo_impl;
+end fifo_dual_write_addr_impl;

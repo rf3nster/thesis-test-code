@@ -1,5 +1,5 @@
 -------------------------------------------------
--- Approximate Network on Chip FIFO
+-- Dual Write FIFO
 -- Purpose:
 --      Expandable FIFO used for network 
 --      interface. Uses generics for size. Pops
@@ -14,11 +14,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library work;
-use work.ni_shared_components.all;
-
 -- Entity
-entity ni_tx_data_fifo is
+entity fifo_dual_write is
     generic
     (
         fifoWidth : integer := 16;
@@ -38,10 +35,10 @@ entity ni_tx_data_fifo is
         dataIn : in std_logic_vector (fifoDoubleWidth - 1 downto 0);
         dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
     );
-end ni_tx_data_fifo;
+end fifo_dual_write;
 
 -- Architecture
-architecture ni_tx_data_fifo_impl of ni_tx_data_fifo is
+architecture fifo_dual_write_impl of fifo_dual_write is
     -- Type definition
     type fifo_t is array (fifoDepth - 1 downto 0) of std_logic_vector (fifoWidth - 1 downto 0);
     -- Create FIFO
@@ -195,4 +192,4 @@ architecture ni_tx_data_fifo_impl of ni_tx_data_fifo is
     fifoFull <= fifoFull_i;
     fifoAlmostFull <= fifoAlmostFull_i;
     dataOut <= fifo(fifoReadPoint);
-end ni_tx_data_fifo_impl;
+end fifo_dual_write_impl;

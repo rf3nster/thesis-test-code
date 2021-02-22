@@ -11,29 +11,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 package ni_rx_components is
 
-
--- RX Data FIFO Declaration
-component ni_rx_data_fifo is
-    generic
-    (
-        fifoWidth : integer := 16;
-        fifoDepth : integer := 4
-    );
-
-    port
-    (
-        -- Clocking control
-        clk, rst : in std_logic;
-        -- FIFO Control
-        popEn, writeEn, dualOutputEn : in std_logic;
-        -- FIFO Status
-        fifoEmpty, fifoFull : out std_logic;
-        -- Data
-        dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
-        dataOut : out std_logic_vector (fifoWidth * 2 - 1 downto 0)
-    );
-end component ni_rx_data_fifo;
-
 -- RX FIFO Write FSM Declaration
 component ni_rx_write_fsm is
     port
@@ -69,28 +46,6 @@ component ni_rx_read_fsm is
         dataValid : out std_logic
     );
 end component ni_rx_read_fsm;
-
--- RX Address FIFO Declaration
-component ni_rx_addr_fifo is
-    generic
-    (
-        fifoWidth : integer := 16;
-        fifoDepth : integer := 4
-    );
-
-    port
-    (
-        -- Clocking control
-        clk, rst : in std_logic;
-        -- FIFO Control
-        popEn, writeEn, dualPop : in std_logic;
-        -- FIFO Status
-        fifoEmpty, fifoFull : out std_logic;
-        -- Data
-        dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
-        dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
-    );
-end component ni_rx_addr_fifo;
 
 component ni_rx_top is
     generic

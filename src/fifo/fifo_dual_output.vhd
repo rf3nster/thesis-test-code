@@ -1,5 +1,5 @@
 -------------------------------------------------
--- Approximate Network on Chip Data RX FIFO
+-- Dual Output FIFO
 -- Purpose:
 --      Expandable FIFO used for network 
 --      interface. Uses generics for size. Pops
@@ -16,7 +16,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 -- Entity
-entity ni_rx_data_fifo is
+entity fifo_dual_output is
     generic
     (
         fifoWidth : integer := 16;
@@ -35,11 +35,11 @@ entity ni_rx_data_fifo is
         dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
         dataOut : out std_logic_vector (fifoWidth * 2 - 1 downto 0)
     );
-end ni_rx_data_fifo;
+end fifo_dual_output;
 
 
 -- Architecture
-architecture ni_rx_data_fifo_impl of ni_rx_data_fifo is
+architecture fifo_dual_output_impl of fifo_dual_output is
     -- Type definition
     type fifo_t is array (fifoDepth - 1 downto 0) of std_logic_vector (fifoWidth - 1 downto 0);
     -- Create FIFO
@@ -166,4 +166,4 @@ architecture ni_rx_data_fifo_impl of ni_rx_data_fifo is
         fifodataOut_upper_i <= fifo(fifoReadPoint + 1) when (dualOutputEn = '1') else
             (others => '0');
         dataOut ((fifoWidth * 2) - 1 downto fifoWidth) <= fifodataOut_upper_i;
-end ni_rx_data_fifo_impl;
+end fifo_dual_output_impl;

@@ -1,5 +1,5 @@
 -------------------------------------------------
--- Approximate Network on Chip Address FIFO
+-- Dual Pop FIFO
 -- Purpose:
 --      Expandable FIFO used for network 
 --      interface. Uses generics for size. Pops
@@ -16,7 +16,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 -- Entity
-entity ni_rx_addr_fifo is
+entity fifo_dual_pop is
     generic
     (
         fifoWidth : integer := 16;
@@ -35,10 +35,10 @@ entity ni_rx_addr_fifo is
         dataIn : in std_logic_vector (fifoWidth - 1 downto 0);
         dataOut : out std_logic_vector (fifoWidth - 1 downto 0)
     );
-end ni_rx_addr_fifo;
+end fifo_dual_pop;
 
 -- Architecture
-architecture ni_rx_addr_fifo_impl of ni_rx_addr_fifo is
+architecture fifo_dual_pop_impl of fifo_dual_pop is
     -- Type definition
     type fifo_t is array (fifoDepth - 1 downto 0) of std_logic_vector (fifoWidth - 1 downto 0);
     -- Create FIFO
@@ -174,4 +174,4 @@ architecture ni_rx_addr_fifo_impl of ni_rx_addr_fifo is
     fifoEmpty <= fifoEmpty_i;
     fifoFull <= fifoFull_i;
     dataOut <= fifo(fifoReadPoint);
-end ni_rx_addr_fifo_impl;
+end fifo_dual_pop_impl;
